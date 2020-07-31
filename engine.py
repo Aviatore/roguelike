@@ -3,22 +3,74 @@ import time
 import random
 
 
-def create_board(height, width):
-    board = []
-    for row_index in range(height):
-        row = (". " * width).split(" ")[0:-1]
-        row = list(map(lambda x : x.replace('.', ' '), row))
+class Board:
+    def __init__(self, height, width):
+        self.height = height
+        self.width = width
+        self.board = []
+
+    def create_board(self):
+        for row_index in range(self.height):
+            row = (". " * self.width).split(" ")[0:-1]
+            row = list(map(lambda x : x.replace('.', ' '), row))
+            
+            self.board.append(row)
         
-        board.append(row)
+        for row_index in range(self.height):
+            for col_index in range(self.width):
+                if row_index in [0, self.height - 1]:
+                    self.board[row_index][col_index] = 'H'
+                elif col_index in [0, self.width - 1]:
+                    self.board[row_index][col_index] = 'H'
+        
+
+class Object:
+    def __init__(self, object_type, object_name, Board):
+        self.type = object_type
+        self.name = object_name
+        self.Board = Board
+        self.row = None
+        self.col = None
+        self.mark = None
     
-    for row_index in range(height):
-        for col_index in range(width):
-            if row_index in [0, height - 1]:
-                board[row_index][col_index] = 'H'
-            elif col_index in [0, width - 1]:
-                board[row_index][col_index] = 'H'
+    def put_on_board(self):
+        self.Board.board[self.row][self.col] = self.mark
+
+
+class Person(Object):
+    def __init__(self, object_type, object_name):
+        super().__init__(object_type, object_name)
+
+    def create(self):
+
+
+
+objects = {
+        1: {
+            'type': 'orc',
+            'name': 'Gorbag',
+            'hp': 60,
+            'dmg': 10,
+            'run_speed': 2,
+            'row': None,
+            'col': None,
+            'timer': 0
+        },
+        2: {
+            'type': 'orc',
+            'name': 'Azog',
+            'hp': 100,
+            'dmg': 15,
+            'run_speed': 2,
+            'row': None,
+            'col': None,
+            'timer': 0
+        }
+    }
     
-    return board
+    random_object_id = random.sample(objects.keys(), 1)[0]
+    random_object = objects[random_object_id]
+    object_random_position(board, random_object, 'H')
 
 
 def get_object(objects, row, col):
