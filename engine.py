@@ -9,6 +9,7 @@ class Board:
         self.width = width
         self.board = []
 
+
     def create_board(self):
         for row_index in range(self.height):
             row = (". " * self.width).split(" ")[0:-1]
@@ -25,52 +26,219 @@ class Board:
         
 
 class Object:
-    def __init__(self, object_type, object_name, Board):
+    def __init__(self, object_type, Board):
         self.type = object_type
-        self.name = object_name
         self.Board = Board
+        self.name = None
         self.row = None
         self.col = None
         self.mark = None
     
+    
     def put_on_board(self):
         self.Board.board[self.row][self.col] = self.mark
-
-
-class Person(Object):
-    def __init__(self, object_type, object_name):
-        super().__init__(object_type, object_name)
-
-    def create(self):
-
-
-
-objects = {
-        1: {
-            'type': 'orc',
-            'name': 'Gorbag',
-            'hp': 60,
-            'dmg': 10,
-            'run_speed': 2,
-            'row': None,
-            'col': None,
-            'timer': 0
-        },
-        2: {
-            'type': 'orc',
-            'name': 'Azog',
-            'hp': 100,
-            'dmg': 15,
-            'run_speed': 2,
-            'row': None,
-            'col': None,
-            'timer': 0
-        }
-    }
     
-    random_object_id = random.sample(objects.keys(), 1)[0]
-    random_object = objects[random_object_id]
-    object_random_position(board, random_object, 'H')
+    
+    def object_random_position(self):       
+        search_coords = True
+        
+        while search_coords:
+            row_random = random.randint(1, self.Board.width - 1)
+            col_random = random.randint(1, self.Board.height - 1)
+            
+            if self.Board.board[row_random][col_random] == ' ':
+                self.Board.board[row_random][col_random] = self.mark
+                self.row = row_random
+                self.col = col_random
+                search_coords = False
+    
+    
+    def random_range_values(self, basic_value, divider):
+        min_max = basic_value / divider
+        
+        return random.randint(basic_value - min_max, basic_value + min_max)
+
+
+class Orc(Object):
+    def __init__(self, Board):
+        super().__init__('orc', Board)
+        self.mark = 'H'
+        self.hp = None
+        self.dmg = None
+        self.run_speed = 1
+        
+        
+    def create_random(self):
+        names = ['Gorbag', 'Azog']
+        basic_hp = 80
+        hp_divider = 4
+        
+        basic_dmg = 20
+        dmg_divider = 2
+        
+        self.hp = self.random_range_values(basic_hp, hp_divider)
+        
+        self.dmg = self.random_range_values(basic_dmg, dmg_divider)
+        
+        self.name = random.sample(names, 1)
+
+
+class Weapon:
+    def __init__(self, name, dmg):
+        self.name = name
+        self.dmg = dmg
+    
+    
+    def set_dmg(self, dmg):
+        self.dmg = dmg
+
+
+class Armor:
+    def __init__(self, name, protection):
+        self.name = name
+        self.protection = protection
+    
+    
+    def set_protection(self, protection):
+        self.protection = protection
+
+
+
+class Inventory:
+    def __init__(self):
+        self.weapon = None
+        self.armor = None
+    
+    
+    def put_on_weapon(self, weapon):
+        self.weapon = weapon
+    
+    
+    def put_down_weapon(self):
+        self.weapon = None
+        
+    
+    def put_on_armor(self, armor):
+        self.armor = armor
+    
+    
+    def put_down_armor(self):
+        self.armor = None
+
+
+class Backpack:
+    def __init__(self):
+        self.weapons = []
+        self.armors = []
+        self.foods = []
+        
+        
+    def add_item(self, item_type, item):
+        if item_type == 'weapon':        
+            self.weapons.append(item)
+        elif item_type == 'armor':
+            self.armors.append(item)
+        elif item_type == 'food':
+            self.foods.append(item)
+    
+    
+    def drop_item(self, item_type, index):
+        if item_type == 'weapon':        
+            self.weapons.pop(item)
+        elif item_type == 'armor':
+            self.armors.pop(item)
+        elif item_type == 'food':
+            self.foods.pop(item)
+    
+
+class Hero(Object):
+    def __init__(self, type, Board):
+        super().__init__(type, Board)
+        self.mark = 'P'
+        self.hp = None
+        self.dmg = None
+        self.walk_speed = 1
+        self.direction = None
+        self.Inventory = Inventory()
+        self.Backpack = Backpack()
+        self.Objects = Objects()
+    
+    
+    def move(self, direction):
+        LEFT = self.col - 1
+        RIGHT = self.col + 1
+        UP = self.row - 1
+        DOWN = self.row + 1
+        
+        if direction == 'up' and self.row > 1:
+            if there_is_obstacle(board, UP, col, objects, stdscr, msgbox, hero):
+                pass
+            else:
+                self.Board.board[self.row][self.col] = ' '
+                self.row = UP
+                self.Board.board[self.row][self.col] = 'P'
+                self.direction = 'u'
+        elif direction == 'down' and self.row < self.Board.height - 2:
+            if there_is_obstacle(board, DOWN, col, objects, stdscr, msgbox, hero):
+                pass
+            else:
+                self.Board.board[self.row][self.col] = ' '
+                self.row = DOWN
+                self.Board.board[self.row][self.col] = 'P'
+                self.direction = 'd'
+        elif direction == 'left' and self.col > 1:
+            if there_is_obstacle(board, row, LEFT, objects, stdscr, msgbox, hero):
+                pass
+            else:
+                self.Board.board[self.row][self.col] = ' '
+                self.col = LEFT
+                self.Board.board[self.row][self.col] = 'P'
+                self.direction = 'l'
+        elif direction == 'right' and self.col < self.Board.width - 2:
+            if there_is_obstacle(board, row, RIGHT, objects, stdscr, msgbox, hero):
+                pass
+            else:
+                self.Board.board[self.row][self.col] = ' '
+                self.col = RIGHT
+                self.Board.board[self.row][self.col] = 'P'
+                self.direction = 'r'
+    
+    
+    def there_is_obstacle(self, board, row, col, objects, stdscr, msgbox, hero):
+        if self.Board.board[row][col] != ' ' and self.Board.board[row][col] != 'P':
+            object_ = self.Objects.get_object(row, col)
+            
+            if object_:
+                self.Objects.react_on_object(object_, stdscr, board, msgbox, hero)
+            
+            return True
+        
+        return False
+        
+        
+
+
+class Food(Object):
+    def __init__(self, Board):
+        super().__init__('food', Board)
+        self.mark = 'F'
+        self.hp = None
+    
+    
+    def create_random(self):
+        names = ['apple', 'berries', 'pear']
+        
+        basic_hp = 30
+        hp_divider = 4
+        
+        self.hp = self.random_range_values(basic_hp, hp_divider)
+        
+        self.name = random.sample(names, 1)
+        
+
+
+
+
 
 
 def get_object(objects, row, col):
