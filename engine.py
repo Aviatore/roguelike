@@ -4,10 +4,11 @@ import random
 
 
 class Board:
-    def __init__(self, height, width):
+    def __init__(self, height, width, screen):
         self.height = height
         self.width = width
         self.board = []
+        self.screen = screen
 
 
     def create_board(self):
@@ -25,7 +26,7 @@ class Board:
                     self.board[row_index][col_index] = 'H'
         
 
-class Object:
+class Person:
     def __init__(self, object_type, Board):
         self.type = object_type
         self.Board = Board
@@ -43,23 +44,27 @@ class Object:
         search_coords = True
         
         while search_coords:
-            row_random = random.randint(1, self.Board.width - 1)
-            col_random = random.randint(1, self.Board.height - 1)
+            row_random = random.randint(1, self.Board.height - 1)
+            col_random = random.randint(1, self.Board.width - 1)
             
-            if self.Board.board[row_random][col_random] == ' ':
-                self.Board.board[row_random][col_random] = self.mark
-                self.row = row_random
-                self.col = col_random
-                search_coords = False
-    
+            
+            try:
+                if self.Board.board[row_random][col_random] == ' ':
+                    self.Board.board[row_random][col_random] = self.mark
+                    self.row = row_random
+                    self.col = col_random
+                    search_coords = False
+            except:
+                self.Board.screen.addstr(5, 5, f"DEBUG: {self.type}")
+                self.Board.screen.getch()
     
     def random_range_values(self, basic_value, divider):
-        min_max = basic_value / divider
+        min_max = int(basic_value / divider)
         
         return random.randint(basic_value - min_max, basic_value + min_max)
 
 
-class Orc(Object):
+class Orc(Person):
     def __init__(self, Board):
         super().__init__('orc', Board)
         self.mark = 'H'
@@ -80,7 +85,7 @@ class Orc(Object):
         
         self.dmg = self.random_range_values(basic_dmg, dmg_divider)
         
-        self.name = random.sample(names, 1)
+        self.name = random.sample(names, 1)[0]
 
 
 class Weapon:
@@ -105,25 +110,30 @@ class Armor:
 
 
 class Inventory:
-    def __init__(self):
+    def __init__(self, Hero):
         self.weapon = None
         self.armor = None
+        self.Hero = Hero
     
     
     def put_on_weapon(self, weapon):
         self.weapon = weapon
+        self.Hero.dmg = self.Hero.dmg + weapon.dmg
     
     
     def put_down_weapon(self):
         self.weapon = None
+        self.Hero.dmg = self.Hero.dmg - weapon.dmg
         
     
     def put_on_armor(self, armor):
         self.armor = armor
-    
+        self.Hero.protection = self.Hero.protection + armor.protection
+        
     
     def put_down_armor(self):
         self.armor = None
+        self.Hero.protection = self.Hero.protection - armor.protection
 
 
 class Backpack:
@@ -151,18 +161,25 @@ class Backpack:
             self.foods.pop(item)
     
 
-class Hero(Object):
-    def __init__(self, type, Board):
+class Hero(Person):
+    def __init__(self, type, Board, Objects):
         super().__init__(type, Board)
         self.mark = 'P'
         self.hp = None
-        self.dmg = None
+        self.dmg = 0
+        self.protection = None
         self.walk_speed = 1
         self.direction = None
-        self.Inventory = Inventory()
+        self.Inventory = Inventory(self)
         self.Backpack = Backpack()
-        self.Objects = Objects()
+        self.Objects = Objects
     
+    
+    def set_hp(self, hp):
+        self.hp = hp
+    
+    def set_dmg(self, dmg):
+        self.dmg = dmg
     
     def move(self, direction):
         LEFT = self.col - 1
@@ -171,7 +188,7 @@ class Hero(Object):
         DOWN = self.row + 1
         
         if direction == 'up' and self.row > 1:
-            if there_is_obstacle(board, UP, col, objects, stdscr, msgbox, hero):
+            if self.there_is_obstacle(UP, self.col):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
@@ -179,7 +196,7 @@ class Hero(Object):
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'u'
         elif direction == 'down' and self.row < self.Board.height - 2:
-            if there_is_obstacle(board, DOWN, col, objects, stdscr, msgbox, hero):
+            if self.there_is_obstacle(DOWN, self.col):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
@@ -187,7 +204,7 @@ class Hero(Object):
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'd'
         elif direction == 'left' and self.col > 1:
-            if there_is_obstacle(board, row, LEFT, objects, stdscr, msgbox, hero):
+            if self.there_is_obstacle(self.row, LEFT):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
@@ -195,7 +212,7 @@ class Hero(Object):
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'l'
         elif direction == 'right' and self.col < self.Board.width - 2:
-            if there_is_obstacle(board, row, RIGHT, objects, stdscr, msgbox, hero):
+            if self.there_is_obstacle(self.row, RIGHT):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
@@ -204,26 +221,148 @@ class Hero(Object):
                 self.direction = 'r'
     
     
-    def there_is_obstacle(self, board, row, col, objects, stdscr, msgbox, hero):
+    def there_is_obstacle(self, row, col):
         if self.Board.board[row][col] != ' ' and self.Board.board[row][col] != 'P':
-            object_ = self.Objects.get_object(row, col)
+            object_index = self.Objects.get_object_index(row, col)
             
-            if object_:
-                self.Objects.react_on_object(object_, stdscr, board, msgbox, hero)
+            if isinstance(object_index, int):
+                
+                self.Objects.react_on_object(object_index)
             
             return True
         
         return False
         
+
+class Objects:
+    def __init__(self, Board, Printer):
+        self.objects_list = []
+        self.Board = Board
+        self.Printer = Printer
+        
+        # self.Hero = Hero
+        self.MsgBox = MsgBox(Board, Printer)
+        
+    def add_object(self, new_object):
+        self.objects_list.append(new_object)
+    
+    def get_object_index(self, row, col):
+        for index, element in enumerate(self.objects_list):
+            if element.row == row and element.col == col:
+                return index
+            elif element.row is None:
+                self.objects_list.remove(element)
+        
+        return False
+    
+    def react_on_object(self, object_index):
+        obj = self.objects_list[object_index]
+        
+        if obj.type == 'food':
+            self.MsgBox.clear_options()
+            self.MsgBox.add_label(f"There is an {obj.name} on the ground.")
+            self.MsgBox.add_option(Option(f"Eat {obj.name}", obj.function, self.Printer))
+            self.MsgBox.print()
+            self.MsgBox.react()
+        
+
+class Option:
+    def __init__(self, label, function, *args):
+        self.label = label
+        self.function = function
+        self.args = args
+    
+    def run(self):
+        return self.function(*self.args)
+
+
+class MsgBox:
+    def __init__(self, Board, Printer):
+        self.label = None
+        self.options = []
+        self.Board = Board
+        self.Printer = Printer
+        self.multiLinePrinter = MultiLinePrinter(Printer)
+    
+    def add_label(self, label):
+        self.label = label
+    
+    def add_option(self, Option):
+        self.options.append(Option)
+    
+    def clear_options(self):
+        self.options.clear()
+    
+    def print(self):
+        row = self.Board.height + 3
+        col = 5
+        
+        self.multiLinePrinter.print_line(self.label)
+        
+        for index, option in enumerate(self.options):
+            msg = f"{index + 1}. {option.label}"
+            
+            self.multiLinePrinter.print_line(msg)
+        
+        self.multiLinePrinter.print_line("0. Exit")
+        
+        self.multiLinePrinter.refresh()
+    
+    def react(self):
+        user_input = None
+        options_index = list(range(len(self.options)))
+        
+        while user_input is None:
+            user_input = self.Printer.screen.getch()
+            
+            if not str(chr(user_input)).isdigit():
+                user_input = None
+                continue
+            else:            
+                chosen_option_index = int(chr(user_input)) - 1
+            
+            if chosen_option_index == -1:
+                self.Printer.clear_screen()
+            elif chosen_option_index in options_index:
+                chosen_option = self.options[chosen_option_index]
+                
+                chosen_option.run()
+            else:
+                user_input = None
+
+
+class MultiLinePrinter:
+    def __init__(self, Printer):
+        self.Printer = Printer
+        
+        self.row = self.Printer.Board.height + 3
+        self.current_row = self.row
+        
+        self.col = 5
+        self.current_col = self.col
+    
+    def print_line(self, msg):
+        self.Printer.screen.addstr(self.current_row, self.current_col, msg)
+        self.current_row += 1
+    
+    def reset_line(self):
+        self.current_row = self.row
+        self.current_col = self.col
+    
+    def refresh(self):
+        self.Printer.screen.refresh()
+    
+    def clear(self):
+        self.Printer.clear_screen()
         
 
 
-class Food(Object):
+class Food(Person):
     def __init__(self, Board):
         super().__init__('food', Board)
         self.mark = 'F'
         self.hp = None
-    
+        self.name = None
     
     def create_random(self):
         names = ['apple', 'berries', 'pear']
@@ -233,7 +372,21 @@ class Food(Object):
         
         self.hp = self.random_range_values(basic_hp, hp_divider)
         
-        self.name = random.sample(names, 1)
+        self.name = random.sample(names, 1)[0]
+    
+    def function(self, Printer):
+        multiLinePrinter = MultiLinePrinter(Printer)
+        multiLinePrinter.clear()
+        
+        multiLinePrinter.print_line(f"You have eaten {self.name}.")
+        multiLinePrinter.print_line(f"Your HP increased by {self.hp}.")
+        
+        self.Board.board[self.row][self.col] = ' '
+        
+        self.row = None
+        self.col = None
+        
+        # msgbox[0] = 5
         
 
 

@@ -1,17 +1,25 @@
-def print_board(board, stdscr):
-    BOARD_HEIGHT = len(board)
-    BOARD_WIDTH = len(board[0])
-    OFFSET = 2
+class Printer:
+    def __init__(self, screen, Board):
+        self.screen = screen
+        self.Board = Board
+        self.__OFFSET = 2
     
-    for row_index in range(BOARD_HEIGHT):
-        for col_index in range(BOARD_WIDTH):
-            stdscr.addch(row_index + OFFSET, col_index + OFFSET, board[row_index][col_index])
-            
-
-def clear_msgbox(board, stdscr):
-    stdscr.clear()
-    print_board(board, stdscr)
-    stdscr.refresh()
+    def clear_screen(self):
+        self.screen.clear()
+        self.print_board()
+        self.screen.refresh()
+        
+    def print_board(self):        
+        for row_index in range(self.Board.height):
+            for col_index in range(self.Board.width):
+                self.screen.addch(row_index + self.__OFFSET, col_index + self.__OFFSET, self.Board.board[row_index][col_index])
+        
+        self.screen.refresh()
+    
+    def print_line(self, row, col, msg):
+        self.screen.addstr(row, col, msg)
+        self.screen.refresh()
+        
 
 
 def print_hero_stats():

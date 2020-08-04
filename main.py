@@ -4,7 +4,56 @@ import ui
 import time
 
 
-def main(stdscr):
+def main(screen):
+    screen.clear()
+    curses.curs_set(False)
+    
+    board = engine.Board(20, 40, screen)
+    board.create_board()
+    
+    printer = ui.Printer(screen, board)
+    
+    objects = engine.Objects(board, printer)
+    
+    food = engine.Food(board)
+    food.create_random()
+    food.object_random_position()
+    food.put_on_board()
+    
+    objects.add_object(food)
+    
+    hero = engine.Hero('fighter', board, objects)
+    sword = engine.Weapon('sword', dmg=30)
+    hero.Inventory.put_on_weapon(sword)
+    hero.set_hp = 100
+    hero.object_random_position()
+    hero.put_on_board()
+    
+    
+    
+    loop = True
+    
+    while loop:
+        user_input = screen.getch()
+        
+        if user_input == curses.KEY_UP:
+            hero.move("up")
+        elif user_input == curses.KEY_DOWN:
+            hero.move("down")
+        elif user_input == curses.KEY_LEFT:
+            hero.move("left")
+        elif user_input == curses.KEY_RIGHT:
+            hero.move("right")
+    
+        printer.print_board()
+        
+        screen.refresh()
+        
+        curses.flushinp()
+        
+        time.sleep(0.1)
+
+def main2(stdscr):
     stdscr.clear()
     
     curses.curs_set(False)
