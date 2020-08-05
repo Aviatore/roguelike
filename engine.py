@@ -11,7 +11,7 @@ class Board:
         self.screen = screen
 
 
-    def create_board(self):
+    def create_board(self, doors):
         for row_index in range(self.height):
             row = (". " * self.width).split(" ")[0:-1]
             row = list(map(lambda x : x.replace('.', ' '), row))
@@ -21,9 +21,15 @@ class Board:
         for row_index in range(self.height):
             for col_index in range(self.width):
                 if row_index in [0, self.height - 1]:
-                    self.board[row_index][col_index] = 'H'
+                    if [row_index, col_index] in doors:
+                        self.board[row_index][col_index] = '-'
+                    else:
+                        self.board[row_index][col_index] = '#'
                 elif col_index in [0, self.width - 1]:
-                    self.board[row_index][col_index] = 'H'
+                    if [row_index, col_index] in doors:
+                        self.board[row_index][col_index] = '-'
+                    else:
+                        self.board[row_index][col_index] = '#'
         
 
 class Person:

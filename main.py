@@ -4,12 +4,24 @@ import ui
 import time
 
 
+class Boards:
+    def __init__(self):
+        self.boards = {}
+        self.current_board = None
+    
+    def add_board(self, board):
+        self.boards.append(board)
+    
+    def set_current_board(self, board_id):
+        set_current_board = boards[board_id]
+
+
 def main(screen):
     screen.clear()
     curses.curs_set(False)
     
     board = engine.Board(20, 40, screen)
-    board.create_board()
+    board.create_board([[0, 6], [12, 39]])
     
     printer = ui.Printer(board)
     
