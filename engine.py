@@ -64,28 +64,7 @@ class Person:
         return random.randint(basic_value - min_max, basic_value + min_max)
 
 
-class Orc(Person):
-    def __init__(self, Board):
-        super().__init__('orc', Board)
-        self.mark = 'H'
-        self.hp = None
-        self.dmg = None
-        self.run_speed = 1
-        
-        
-    def create_random(self):
-        names = ['Gorbag', 'Azog']
-        basic_hp = 80
-        hp_divider = 4
-        
-        basic_dmg = 20
-        dmg_divider = 2
-        
-        self.hp = self.random_range_values(basic_hp, hp_divider)
-        
-        self.dmg = self.random_range_values(basic_dmg, dmg_divider)
-        
-        self.name = random.sample(names, 1)[0]
+
 
 
 class Weapon:
@@ -227,7 +206,7 @@ class Hero(Person):
             
             if isinstance(object_index, int):
                 
-                self.Objects.react_on_object(object_index)
+                self.Objects.react_on_object(object_index, self)
             
             return True
         
@@ -239,9 +218,6 @@ class Objects:
         self.objects_list = []
         self.Board = Board
         self.Printer = Printer
-        
-        # self.Hero = Hero
-        self.MsgBox = MsgBox(Board, Printer)
         
     def add_object(self, new_object):
         self.objects_list.append(new_object)
@@ -255,80 +231,10 @@ class Objects:
         
         return False
     
-    def react_on_object(self, object_index):
+    def react_on_object(self, object_index, hero):
         obj = self.objects_list[object_index]
         
-        if obj.type == 'food':
-            self.MsgBox.clear_options()
-            self.MsgBox.add_label(f"There is an {obj.name} on the ground.")
-            self.MsgBox.add_option(Option(f"Eat {obj.name}", obj.function, self.Printer))
-            self.MsgBox.print()
-            self.MsgBox.react()
-        
-
-class Option:
-    def __init__(self, label, function, *args):
-        self.label = label
-        self.function = function
-        self.args = args
-    
-    def run(self):
-        return self.function(*self.args)
-
-
-class MsgBox:
-    def __init__(self, Board, Printer):
-        self.label = None
-        self.options = []
-        self.Board = Board
-        self.Printer = Printer
-        self.multiLinePrinter = MultiLinePrinter(Printer)
-    
-    def add_label(self, label):
-        self.label = label
-    
-    def add_option(self, Option):
-        self.options.append(Option)
-    
-    def clear_options(self):
-        self.options.clear()
-    
-    def print(self):
-        row = self.Board.height + 3
-        col = 5
-        
-        self.multiLinePrinter.print_line(self.label)
-        
-        for index, option in enumerate(self.options):
-            msg = f"{index + 1}. {option.label}"
-            
-            self.multiLinePrinter.print_line(msg)
-        
-        self.multiLinePrinter.print_line("0. Exit")
-        
-        self.multiLinePrinter.refresh()
-    
-    def react(self):
-        user_input = None
-        options_index = list(range(len(self.options)))
-        
-        while user_input is None:
-            user_input = self.Printer.screen.getch()
-            
-            if not str(chr(user_input)).isdigit():
-                user_input = None
-                continue
-            else:            
-                chosen_option_index = int(chr(user_input)) - 1
-            
-            if chosen_option_index == -1:
-                self.Printer.clear_screen()
-            elif chosen_option_index in options_index:
-                chosen_option = self.options[chosen_option_index]
-                
-                chosen_option.run()
-            else:
-                user_input = None
+        obj.react(hero)
 
 
 class MultiLinePrinter:
@@ -363,6 +269,8 @@ class Food(Person):
         self.mark = 'F'
         self.hp = None
         self.name = None
+        self.printer = ui.Printer(self.Board)
+        self.multilinePrinter = MultiLinePrinter(self.printer)
     
     def create_random(self):
         names = ['apple', 'berries', 'pear']
@@ -374,25 +282,119 @@ class Food(Person):
         
         self.name = random.sample(names, 1)[0]
     
-    def function(self, Printer):
-        multiLinePrinter = MultiLinePrinter(Printer)
-        multiLinePrinter.clear()
+    def react(self, hero):
+        user_input = None
+        next_round = False
         
-        multiLinePrinter.print_line(f"You have eaten {self.name}.")
-        multiLinePrinter.print_line(f"Your HP increased by {self.hp}.")
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+                
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            self.multilinePrinter.print_line(f"There is an {self.name} on the ground.")
+            self.multilinePrinter.print_line(f"1. Eat {self.name}.")
+            self.multilinePrinter.print_line("0. Exit")
+            self.multilinePrinter.print_line(" ")
+            self.multilinePrinter.refresh()
         
-        self.Board.board[self.row][self.col] = ' '
-        
-        self.row = None
-        self.col = None
-        
-        # msgbox[0] = 5
+            if user_input == ord('1'):
+                self.multilinePrinter.print_line(f"You have eaten {self.name}.")
+                self.multilinePrinter.print_line(f"Your HP increased by {self.hp}.")
+                
+                self.Board.board[self.row][self.col] = ' '
+                
+                self.row = None
+                self.col = None
+                
+                return
+            elif user_input == ord('0'):
+                self.multilinePrinter.clear()
+            else:
+                user_input = None
+            
+            next_round = True
         
 
+class Orc(Person):
+    def __init__(self, Board):
+        super().__init__('orc', Board)
+        self.mark = 'H'
+        self.hp = None
+        self.dmg = None
+        self.run_speed = 1
+        self.name = None
+        self.printer = ui.Printer(self.Board)
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+        
+        
+    def create_random(self):
+        names = ['Gorbag', 'Azog']
+        basic_hp = 80
+        hp_divider = 4
+        
+        basic_dmg = 20
+        dmg_divider = 2
+        
+        self.hp = self.random_range_values(basic_hp, hp_divider)
+        
+        self.dmg = self.random_range_values(basic_dmg, dmg_divider)
+        
+        self.name = random.sample(names, 1)[0]
+    
+    def react(self, hero):        
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+            
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            self.multilinePrinter.print_line(f"The orc {self.name} cached you. You must fight!")
+            self.multilinePrinter.print_line(f"1. Hit {self.name} with your {hero.Inventory.weapon.name}.")
+            self.multilinePrinter.print_line("0. Exit")
+            self.multilinePrinter.print_line(" ")
+            self.multilinePrinter.refresh()            
+            
+            if user_input == ord('1'):
+                hero_dmg_range = int(hero.dmg / 10)
+                hero_dmg_random = random.randint(hero.dmg - hero_dmg_range, hero.dmg + hero_dmg_range)
+                
+                orc_dmg_range = int(self.dmg / 10)
+                orc_dmg_random = random.randint(self.dmg - orc_dmg_range, self.dmg + orc_dmg_range)
+                
+                self.hp -= hero_dmg_random
+                if self.hp < 0:
+                    self.multilinePrinter.print_line(f"You killed {self.name}.")
+                    
+                    self.Board.board[self.row][self.col] = ' '
+                    
+                    self.row = None
+                    self.col = None
+                    
+                    return
+                else:
+                    self.multilinePrinter.print_line(f"You hit the {self.name} by {hero_dmg_random}. {self.name}  HP: {self.hp}.")
+                    user_input = None
 
-
-
-
+                hero.hp -= orc_dmg_random
+                
+                if hero.hp < 0:
+                    self.multilinePrinter.print_line(f"You was killed by {self.name}.")
+                    
+                    return
+                else:
+                    self.multilinePrinter.print_line(f"{self.name} hit you by {orc_dmg_random}. Your HP: {hero.hp}.")
+                    user_input = None
+            elif user_input == ord('0'):
+                self.multilinePrinter.clear()
+            else:
+                user_input = None
+            
+            next_round = True
+        
 
 def get_object(objects, row, col):
     for object_ in objects:

@@ -1,7 +1,7 @@
 class Printer:
-    def __init__(self, screen, Board):
-        self.screen = screen
+    def __init__(self, Board):
         self.Board = Board
+        self.screen = self.Board.screen
         self.__OFFSET = 2
     
     def clear_screen(self):

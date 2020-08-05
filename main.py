@@ -11,7 +11,7 @@ def main(screen):
     board = engine.Board(20, 40, screen)
     board.create_board()
     
-    printer = ui.Printer(screen, board)
+    printer = ui.Printer(board)
     
     objects = engine.Objects(board, printer)
     
@@ -19,13 +19,18 @@ def main(screen):
     food.create_random()
     food.object_random_position()
     food.put_on_board()
-    
     objects.add_object(food)
+    
+    orc = engine.Orc(board)
+    orc.create_random()
+    orc.object_random_position()
+    orc.put_on_board()
+    objects.add_object(orc)
     
     hero = engine.Hero('fighter', board, objects)
     sword = engine.Weapon('sword', dmg=30)
     hero.Inventory.put_on_weapon(sword)
-    hero.set_hp = 100
+    hero.set_hp(100)
     hero.object_random_position()
     hero.put_on_board()
     
