@@ -15,6 +15,7 @@ class Boards:
         self.current_board = self.boards[board_id]
         
 
+
 class Board:
     def __init__(self, board_id, height, width, screen):
         self.height = height
@@ -26,7 +27,7 @@ class Board:
 
     def create_board(self, **doors): # np. create_board(board1=[0,5], board2=[5,0])
         for board_id in doors.keys():
-            door_id = ":".join(map(str, doors[board_id]))
+            door_id = ":".join(map(str, doors[board_id])) # door_id=<row_index>:<col_index>
             
             self.doors_destination[door_id] = board_id
         
@@ -57,6 +58,7 @@ class Board:
         return False
         
 
+
 class Person:
     def __init__(self, object_type, all_boards):
         self.type = object_type
@@ -67,10 +69,8 @@ class Person:
         self.col = None
         self.mark = None
     
-    
     def put_on_board(self):
         self.Board.board[self.row][self.col] = self.mark
-    
     
     def object_random_position(self):       
         search_coords = True
@@ -78,7 +78,6 @@ class Person:
         while search_coords:
             row_random = random.randint(1, self.Board.height - 1)
             col_random = random.randint(1, self.Board.width - 1)
-            
             
             try:
                 if self.Board.board[row_random][col_random] == ' ':
@@ -100,23 +99,20 @@ class Person:
 
 
 
-
-
 class Weapon:
     def __init__(self, name, dmg):
         self.name = name
         self.dmg = dmg
     
-    
     def set_dmg(self, dmg):
         self.dmg = dmg
+
 
 
 class Armor:
     def __init__(self, name, protection):
         self.name = name
         self.protection = protection
-    
     
     def set_protection(self, protection):
         self.protection = protection
@@ -129,25 +125,22 @@ class Inventory:
         self.armor = None
         self.Hero = Hero
     
-    
     def put_on_weapon(self, weapon):
         self.weapon = weapon
         self.Hero.dmg = self.Hero.dmg + weapon.dmg
-    
     
     def put_down_weapon(self):
         self.weapon = None
         self.Hero.dmg = self.Hero.dmg - weapon.dmg
         
-    
     def put_on_armor(self, armor):
         self.armor = armor
         self.Hero.protection = self.Hero.protection + armor.protection
         
-    
     def put_down_armor(self):
         self.armor = None
         self.Hero.protection = self.Hero.protection - armor.protection
+
 
 
 class Backpack:
@@ -155,7 +148,6 @@ class Backpack:
         self.weapons = []
         self.armors = []
         self.foods = []
-        
         
     def add_item(self, item_type, item):
         if item_type == 'weapon':        
@@ -165,7 +157,6 @@ class Backpack:
         elif item_type == 'food':
             self.foods.append(item)
     
-    
     def drop_item(self, item_type, index):
         if item_type == 'weapon':        
             self.weapons.pop(item)
@@ -174,6 +165,7 @@ class Backpack:
         elif item_type == 'food':
             self.foods.pop(item)
     
+
 
 class Hero(Person):
     def __init__(self, type, all_boards, all_objects, printer):
@@ -191,7 +183,6 @@ class Hero(Person):
         self.printer = printer
         self.printer.clear_screen()
     
-    
     def set_hp(self, hp):
         self.hp = hp
     
@@ -199,6 +190,8 @@ class Hero(Person):
         self.dmg = dmg
     
     def move(self, direction):
+        self.printer.clear_screen()
+        
         LEFT = self.col - 1
         RIGHT = self.col + 1
         UP = self.row - 1
@@ -319,7 +312,6 @@ class Hero(Person):
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'r'
     
-    
     def there_is_obstacle(self, row, col):
         if self.Board.board[row][col] != ' ' and self.Board.board[row][col] != 'P':
             object_index = self.Objects.get_object_index(row, col)
@@ -336,6 +328,7 @@ class Hero(Person):
         self.Objects = self.all_objects.current_objects
         
 
+
 class AllObjects:
     def __init__(self):
         self.all_objects = {}
@@ -346,6 +339,7 @@ class AllObjects:
     
     def set_current_objects(self, objects_id):
         self.current_objects = self.all_objects[objects_id]
+
 
 
 class Objects:
@@ -371,6 +365,7 @@ class Objects:
         obj = self.objects_list[object_index]
         
         obj.react(hero)
+
 
 
 class MultiLinePrinter:
@@ -450,6 +445,7 @@ class Food(Person):
                 user_input = None
             
             next_round = True
+       
         
 
 class Orc(Person):
@@ -462,8 +458,7 @@ class Orc(Person):
         self.name = None
         self.printer = printer
         self.multilinePrinter = MultiLinePrinter(self.printer)
-        
-        
+         
     def create_random(self):
         names = ['Gorbag', 'Azog']
         basic_hp = 80
@@ -532,96 +527,7 @@ class Orc(Person):
             next_round = True
         
 
-def get_object(objects, row, col):
-    for object_ in objects:
-        if object_['row'] == row and object_['col'] == col:
-            return object_
-        elif object_['row'] is None:
-            objects.remove(object_)
-    
-    return False
-
-
-def react_on_object(object_, stdscr, board, msgbox, hero):
-    if object_['type'] == 'food':
-        stdscr.addstr(24, 5, f"There is an {object_['name']} on the ground.")
-        stdscr.addstr(25, 5, f"1. Eat {object_['name']}")
-        stdscr.addstr(26, 5, f"0. Exit")
-        stdscr.refresh()
-        
-        user_input = None
-        while user_input is None:
-            user_input = stdscr.getch()
-            
-            if user_input == ord('1'):
-                ui.clear_msgbox(board, stdscr)
-                stdscr.addstr(24, 5, f"Yammy")
-                stdscr.addstr(26, 5, f"Your HP increased by {object_['hp']}.")
-                board[object_['row']][object_['col']] = ' '
-                object_['row'] = None
-                object_['col'] = None
-                msgbox[0] = 5
-            elif user_input == ord('0'):
-                ui.clear_msgbox(board, stdscr)
-            else:
-                user_input = None
-    elif object_['type'] == 'orc':
-        stdscr.addstr(24, 5, f"The orc {object_['name']} cached you. You must fight!")
-        stdscr.addstr(25, 5, f"1. Hit {object_['name']} with your {hero['inventory']['weapon']['name']}.")
-        stdscr.refresh()
-        
-        
-        user_input = None
-        while user_input is None:
-            user_input = stdscr.getch()
-            
-            if user_input == ord('1'):
-                ui.clear_msgbox(board, stdscr)
-                
-                hero_dmg = hero['inventory']['weapon']['damage']
-                hero_dmg_range = int(hero_dmg / 10)
-                hero_dmg_random = random.randint(hero_dmg - hero_dmg_range, hero_dmg + hero_dmg_range)
-                
-                orc_dmg = object_['dmg']
-                orc_dmg_range = int(orc_dmg / 10)
-                orc_dmg_random = random.randint(orc_dmg - orc_dmg_range, orc_dmg + orc_dmg_range)
-                
-                object_['hp'] -= hero_dmg_random
-                if object_['hp'] < 0:
-                    ui.clear_msgbox(board, stdscr)
-                    stdscr.addstr(24, 5, f"You killed {object_['name']}.")
-                    board[object_['row']][object_['col']] = ' '
-                    object_['row'] = None
-                    object_['col'] = None
-                    continue
-                else:
-                    stdscr.addstr(24, 5, f"You hit the {object_['name']} by {hero_dmg_random}. {object_['name']}  HP: {object_['hp']}.")
-                
-                hero['hp'] -= orc_dmg_random
-                if hero['hp'] < 0:
-                    ui.clear_msgbox(board, stdscr)
-                    stdscr.addstr(24, 5, f"You was killed by {object_['name']}.")
-                    continue
-                else:
-                    stdscr.addstr(25, 5, f"{object_['name']} hit you by {orc_dmg_random}. Your HP: {hero['hp']}.")
-                    
-                user_input = None
-            else:
-                user_input = None
-                
-                
-def there_is_obstacle(board, row, col, objects, stdscr, msgbox, hero):
-    if board[row][col] != ' ' and board[row][col] != 'P':
-        object_ = get_object(objects, row, col)
-        
-        if object_:
-            react_on_object(object_, stdscr, board, msgbox, hero)
-        
-        return True
-    
-    return False
-
-
+# Below function needs to be implemented within Hero class
 def move_objects(board, objects, hero, stdscr, msgbox):    
     for object_ in objects:
         if object_['row'] is None:
@@ -707,182 +613,3 @@ def move_objects(board, objects, hero, stdscr, msgbox):
                 if counter == object_['run_speed']:
                     loop = False
             
-
-def move_hero(board, hero, direction, objects, stdscr, msgbox):
-    BOARD_HEIGHT = len(board)
-    BOARD_WIDTH = len(board[0])
-    row = hero['row']
-    col = hero['col']
-    LEFT = col - 1
-    RIGHT = col + 1
-    UP = row - 1
-    DOWN = row + 1
-
-    if direction == 'up' and row > 1:
-        if there_is_obstacle(board, UP, col, objects, stdscr, msgbox, hero):
-            pass
-        else:
-            board[row][col] = ' '
-            row = UP
-            board[row][col] = 'P'
-            hero['direction'] = 'u'
-    elif direction == 'down' and row < BOARD_HEIGHT - 2:
-        if there_is_obstacle(board, DOWN, col, objects, stdscr, msgbox, hero):
-            pass
-        else:
-            board[row][col] = ' '
-            row = DOWN
-            board[row][col] = 'P'
-            hero['direction'] = 'd'
-    elif direction == 'left' and col > 1:
-        if there_is_obstacle(board, row, LEFT, objects, stdscr, msgbox, hero):
-            pass
-        else:
-            board[row][col] = ' '
-            col = LEFT
-            board[row][col] = 'P'
-            hero['direction'] = 'l'
-    elif direction == 'right' and col < BOARD_WIDTH - 2:
-        if there_is_obstacle(board, row, RIGHT, objects, stdscr, msgbox, hero):
-            pass
-        else:
-            board[row][col] = ' '
-            col = RIGHT
-            board[row][col] = 'P'
-            hero['direction'] = 'r'
-    
-    hero['row'] = row
-    hero['col'] = col
-    stdscr.refresh()
-        
-        
-
-
-def object_random_position(board, object_, character):
-    BOARD_HEIGHT = len(board)
-    BOARD_WIDTH = len(board[0])
-    
-    search_coords = True
-    
-    while search_coords:
-        row_random = random.randint(1, BOARD_HEIGHT - 1)
-        col_random = random.randint(1, BOARD_WIDTH - 1)
-        
-        if board[row_random][col_random] == ' ':
-            board[row_random][col_random] = character
-            object_['row'] = row_random
-            object_['col'] = col_random
-            search_coords = False            
-
-
-def object_food_create(board):
-    objects = {
-        1: {
-            'type': 'food',
-            'name': 'apple',
-            'hp': 10,
-            'row': None,
-            'col': None
-        },
-        2: {
-            'type': 'food',
-            'name': 'banana',
-            'hp': 20,
-            'row': None,
-            'col': None
-        }
-    }
-    
-    random_object_id = random.sample(objects.keys(), 1)[0]
-    random_object = objects[random_object_id]
-    object_random_position(board, random_object, 'F')
-    
-    return random_object
-
-
-def object_person_create(board):
-    objects = {
-        1: {
-            'type': 'orc',
-            'name': 'Gorbag',
-            'hp': 60,
-            'dmg': 10,
-            'run_speed': 2,
-            'row': None,
-            'col': None,
-            'timer': 0
-        },
-        2: {
-            'type': 'orc',
-            'name': 'Azog',
-            'hp': 100,
-            'dmg': 15,
-            'run_speed': 2,
-            'row': None,
-            'col': None,
-            'timer': 0
-        }
-    }
-    
-    random_object_id = random.sample(objects.keys(), 1)[0]
-    random_object = objects[random_object_id]
-    object_random_position(board, random_object, 'H')
-    
-    return random_object
-
-
-def object_hero_create(board):
-    objects = {
-        1: {
-            'type': 'Knight',
-            'row': None,
-            'col': None,
-            'hp': 200,
-            'walk_speed': 1,
-            'inventory': {
-                'weapon': {
-                    'type': 'weapon',
-                    'name': 'Sword',
-                    'damage': 40
-                }
-            },
-            'direction': None
-        },
-        2: {
-            'type': 'Wizard',
-            'row': None,
-            'col': None,
-            'hp': 100,
-            'mana': 100,
-            'walk_speed': 1,
-            'inventory': {
-                'weapon': {
-                    'type': 'weapon',
-                    'name': 'Fire ball',
-                    'damage': 60
-                }
-            },
-            'direction': None
-        },
-        3: {
-            'type': 'Cutler',
-            'row': None,
-            'col': None,
-            'hp': 150,
-            'walk_speed': 1,
-            'inventory': {
-                'weapon': {
-                    'type': 'weapon',
-                    'name': 'Dagger',
-                    'damage': 30
-                }
-            },
-            'direction': None
-        }
-    }
-    
-    random_object_id = random.sample(objects.keys(), 1)[0]
-    random_object = objects[random_object_id]
-    object_random_position(board, random_object, 'P')
-    
-    return random_object
