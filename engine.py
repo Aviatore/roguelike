@@ -3,15 +3,33 @@ import time
 import random
 
 
+class Boards:
+    def __init__(self):
+        self.boards = {}
+        self.current_board = None
+    
+    def add_board(self, board):
+        self.boards[board.board_id] = board
+    
+    def set_current_board(self, board_id):
+        self.current_board = self.boards[board_id]
+        
+
 class Board:
-    def __init__(self, height, width, screen):
+    def __init__(self, board_id, height, width, screen):
         self.height = height
         self.width = width
         self.board = []
+        self.board_id = board_id
         self.screen = screen
+        self.doors_destination = {}
 
-
-    def create_board(self, doors):
+    def create_board(self, **doors): # np. create_board(board1=[0,5], board2=[5,0])
+        for board_id in doors.keys():
+            door_id = ":".join(map(str, doors[board_id]))
+            
+            self.doors_destination[door_id] = board_id
+        
         for row_index in range(self.height):
             row = (". " * self.width).split(" ")[0:-1]
             row = list(map(lambda x : x.replace('.', ' '), row))
@@ -21,21 +39,29 @@ class Board:
         for row_index in range(self.height):
             for col_index in range(self.width):
                 if row_index in [0, self.height - 1]:
-                    if [row_index, col_index] in doors:
+                    if [row_index, col_index] in doors.values():
                         self.board[row_index][col_index] = '-'
                     else:
                         self.board[row_index][col_index] = '#'
                 elif col_index in [0, self.width - 1]:
-                    if [row_index, col_index] in doors:
+                    if [row_index, col_index] in doors.values():
                         self.board[row_index][col_index] = '-'
                     else:
                         self.board[row_index][col_index] = '#'
+    
+    def door_coords(self, board_id):
+        for key in self.doors_destination:
+            if self.doors_destination[key] == board_id:
+                return list(map(int, key.split(":")))
+        
+        return False
         
 
 class Person:
-    def __init__(self, object_type, Board):
+    def __init__(self, object_type, all_boards):
         self.type = object_type
-        self.Board = Board
+        self.all_boards = all_boards
+        self.Board = self.all_boards.current_board
         self.name = None
         self.row = None
         self.col = None
@@ -68,6 +94,9 @@ class Person:
         min_max = int(basic_value / divider)
         
         return random.randint(basic_value - min_max, basic_value + min_max)
+    
+    def update_board(self):
+        self.Board = self.all_boards.current_board
 
 
 
@@ -147,8 +176,8 @@ class Backpack:
     
 
 class Hero(Person):
-    def __init__(self, type, Board, Objects):
-        super().__init__(type, Board)
+    def __init__(self, type, all_boards, all_objects, printer):
+        super().__init__(type, all_boards)
         self.mark = 'P'
         self.hp = None
         self.dmg = 0
@@ -157,7 +186,10 @@ class Hero(Person):
         self.direction = None
         self.Inventory = Inventory(self)
         self.Backpack = Backpack()
-        self.Objects = Objects
+        self.all_objects = all_objects
+        self.Objects = self.all_objects.current_objects
+        self.printer = printer
+        self.printer.clear_screen()
     
     
     def set_hp(self, hp):
@@ -172,32 +204,114 @@ class Hero(Person):
         UP = self.row - 1
         DOWN = self.row + 1
         
-        if direction == 'up' and self.row > 1:
-            if self.there_is_obstacle(UP, self.col):
+        if direction == 'up':
+            if self.Board.board[UP][self.col] == '-':
+                current_board_id = self.Board.board_id
+                self.Board.board[self.row][self.col] = ' '
+                
+                door_id = f"{str(UP)}:{str(self.col)}"
+                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+                
+                self.all_boards.set_current_board(destination_board_id)
+                self.all_objects.set_current_objects(destination_board_id)
+                self.printer.update_board()
+                self.update_board()
+                self.update_objects()
+                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
+                
+                
+                self.row = prev_door_row - 1
+                self.col = prev_door_col
+                self.put_on_board()
+                self.printer.clear_screen()
+                
+            elif self.Board.board[UP][self.col] == '#':
+                pass
+            elif self.there_is_obstacle(UP, self.col):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
                 self.row = UP
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'u'
-        elif direction == 'down' and self.row < self.Board.height - 2:
-            if self.there_is_obstacle(DOWN, self.col):
+        elif direction == 'down':
+            if self.Board.board[DOWN][self.col] == '-':
+                current_board_id = self.Board.board_id
+                self.Board.board[self.row][self.col] = ' '
+                
+                door_id = f"{str(DOWN)}:{str(self.col)}"
+                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+                
+                self.all_boards.set_current_board(destination_board_id)
+                self.all_objects.set_current_objects(destination_board_id)
+                self.printer.update_board()
+                self.update_board()
+                self.update_objects()
+                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
+                
+                self.row = prev_door_row + 1
+                self.col = prev_door_col
+                self.put_on_board()
+                self.printer.clear_screen()
+            elif self.Board.board[DOWN][self.col] == '#':
+                pass
+            elif self.there_is_obstacle(DOWN, self.col):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
                 self.row = DOWN
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'd'
-        elif direction == 'left' and self.col > 1:
-            if self.there_is_obstacle(self.row, LEFT):
+        elif direction == 'left':
+            if self.Board.board[self.row][LEFT] == '-':
+                current_board_id = self.Board.board_id
+                self.Board.board[self.row][self.col] = ' '
+                
+                door_id = f"{str(self.row)}:{str(LEFT)}"
+                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+                
+                self.all_boards.set_current_board(destination_board_id)
+                self.all_objects.set_current_objects(destination_board_id)
+                self.printer.update_board()
+                self.update_board()
+                self.update_objects()
+                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
+                
+                self.row = prev_door_row
+                self.col = prev_door_col - 1
+                self.put_on_board()
+                self.printer.clear_screen()
+            elif self.Board.board[self.row][LEFT] == '#':
+                pass
+            elif self.there_is_obstacle(self.row, LEFT):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
                 self.col = LEFT
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'l'
-        elif direction == 'right' and self.col < self.Board.width - 2:
-            if self.there_is_obstacle(self.row, RIGHT):
+        elif direction == 'right':
+            if self.Board.board[self.row][RIGHT] == '-':
+                current_board_id = self.Board.board_id
+                self.Board.board[self.row][self.col] = ' '
+                
+                door_id = f"{str(self.row)}:{str(RIGHT)}"
+                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+                
+                self.all_boards.set_current_board(destination_board_id)
+                self.all_objects.set_current_objects(destination_board_id)
+                self.printer.update_board()
+                self.update_board()
+                self.update_objects()
+                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
+                
+                self.row = prev_door_row
+                self.col = prev_door_col + 1
+                self.put_on_board()
+                self.printer.clear_screen()
+            elif self.Board.board[self.row][RIGHT] == '#':
+                pass
+            elif self.there_is_obstacle(self.row, RIGHT):
                 pass
             else:
                 self.Board.board[self.row][self.col] = ' '
@@ -217,11 +331,27 @@ class Hero(Person):
             return True
         
         return False
+
+    def update_objects(self):
+        self.Objects = self.all_objects.current_objects
         
 
+class AllObjects:
+    def __init__(self):
+        self.all_objects = {}
+        self.current_objects = None
+    
+    def add_objects(self, objects_id, objects):
+        self.all_objects[objects_id] = objects
+    
+    def set_current_objects(self, objects_id):
+        self.current_objects = self.all_objects[objects_id]
+
+
 class Objects:
-    def __init__(self, Board, Printer):
+    def __init__(self, objects_id, Board, Printer):
         self.objects_list = []
+        self.objects_id = objects_id
         self.Board = Board
         self.Printer = Printer
         
@@ -270,12 +400,12 @@ class MultiLinePrinter:
 
 
 class Food(Person):
-    def __init__(self, Board):
-        super().__init__('food', Board)
+    def __init__(self, all_boards, printer):
+        super().__init__('food', all_boards)
         self.mark = 'F'
         self.hp = None
         self.name = None
-        self.printer = ui.Printer(self.Board)
+        self.printer = printer
         self.multilinePrinter = MultiLinePrinter(self.printer)
     
     def create_random(self):
@@ -323,14 +453,14 @@ class Food(Person):
         
 
 class Orc(Person):
-    def __init__(self, Board):
-        super().__init__('orc', Board)
+    def __init__(self, all_boards, printer):
+        super().__init__('orc', all_boards)
         self.mark = 'H'
         self.hp = None
         self.dmg = None
         self.run_speed = 1
         self.name = None
-        self.printer = ui.Printer(self.Board)
+        self.printer = printer
         self.multilinePrinter = MultiLinePrinter(self.printer)
         
         

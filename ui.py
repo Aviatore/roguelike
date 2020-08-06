@@ -1,6 +1,7 @@
 class Printer:
-    def __init__(self, Board):
-        self.Board = Board
+    def __init__(self, all_boards):
+        self.all_boards = all_boards
+        self.Board = self.all_boards.current_board
         self.screen = self.Board.screen
         self.__OFFSET = 2
     
@@ -19,6 +20,10 @@ class Printer:
     def print_line(self, row, col, msg):
         self.screen.addstr(row, col, msg)
         self.screen.refresh()
+    
+    def update_board(self):
+        self.Board = self.all_boards.current_board
+        
         
 
 
