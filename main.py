@@ -8,6 +8,18 @@ import boards
 def main(screen):
     screen.clear()
     curses.curs_set(False)
+    curses.use_default_colors()
+    curses.init_pair(1, 39, 21) # WATER_COLOR_PAIR
+    curses.init_pair(2, 76, -1) # TREE_COLOR_PAIR
+    curses.init_pair(3, 247, 15) # ROCK_COLOR_PAIR
+    color_pairs = [
+        ['~', 1],
+        ['Y', 2],
+        ['T', 2],
+        ['#', 3],
+        ['[', 3],
+        [']', 3]
+    ]
     
     all_boards = engine.Boards()
     
@@ -30,7 +42,8 @@ def main(screen):
     
     all_boards.set_current_board('b1')
     
-    printer = ui.Printer(all_boards)
+    printer = ui.Printer(all_boards, curses)
+    printer.add_colors(color_pairs)
     
     all_objects = engine.AllObjects()
     
