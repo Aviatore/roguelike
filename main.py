@@ -2,6 +2,7 @@ import curses
 import engine
 import ui
 import time
+import boards
 
 
 def main(screen):
@@ -10,18 +11,22 @@ def main(screen):
     
     all_boards = engine.Boards()
     
-    board1 = engine.Board('b1', 20, 40, screen)
-    board1.create_board(b2=[0, 6], b3=[12,39])
+    board1 = engine.Board('b1', screen, 20, 40)
+    board1.create_board(b2=[0, 6], b3=[12,39], b4=[19,10])
     
-    board2 = engine.Board('b2', 10, 50, screen)
+    board2 = engine.Board('b2', screen, 10, 50)
     board2.create_board(b1=[9,4], b3=[5,49])
     
-    board3 = engine.Board('b3', 30, 10, screen)
+    board3 = engine.Board('b3', screen, 30, 10)
     board3.create_board(b1=[25,0], b2=[5,0])
+    
+    board4 = engine.Board('b4', screen)
+    board4.create_board_template(board4.template_to_list(boards.board_5), ['b1'])
     
     all_boards.add_board(board1)
     all_boards.add_board(board2)
     all_boards.add_board(board3)
+    all_boards.add_board(board4)
     
     all_boards.set_current_board('b1')
     
@@ -49,6 +54,7 @@ def main(screen):
     all_objects.add_objects('b1', objects1)
     all_objects.add_objects('b2', objects2)
     all_objects.add_objects('b3', objects3)
+    all_objects.add_objects('b4', objects3)
     
     all_objects.set_current_objects('b1')
     

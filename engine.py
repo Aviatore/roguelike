@@ -17,7 +17,7 @@ class Boards:
 
 
 class Board:
-    def __init__(self, board_id, height, width, screen):
+    def __init__(self, board_id, screen, height=None, width=None):
         self.height = height
         self.width = width
         self.board = []
@@ -25,17 +25,20 @@ class Board:
         self.screen = screen
         self.doors_destination = {}
 
+    def board_init(self):
+        for row_index in range(self.height):
+            row = (". " * self.width).split(" ")[0:-1]
+            row = list(map(lambda x : x.replace('.', ' '), row))
+            
+            self.board.append(row)
+
     def create_board(self, **doors): # np. create_board(board1=[0,5], board2=[5,0])
         for board_id in doors.keys():
             door_id = ":".join(map(str, doors[board_id])) # door_id=<row_index>:<col_index>
             
             self.doors_destination[door_id] = board_id
         
-        for row_index in range(self.height):
-            row = (". " * self.width).split(" ")[0:-1]
-            row = list(map(lambda x : x.replace('.', ' '), row))
-            
-            self.board.append(row)
+        self.board_init()
         
         for row_index in range(self.height):
             for col_index in range(self.width):
@@ -49,6 +52,30 @@ class Board:
                         self.board[row_index][col_index] = '-'
                     else:
                         self.board[row_index][col_index] = '#'
+    
+    def template_to_list(self, template):
+        template_list = []
+        
+        for line in template.split('\n'):
+            if len(line) > 0:
+                template_list.append(list(line))
+            
+        return template_list
+    
+    def create_board_template(self, template_list, dest_board_ids):
+        self.height = len(template_list)
+        self.width = len(template_list[0])
+        
+        self.board_init()
+        
+        for row_index in range(self.height):
+            for col_index in range(self.width):
+                if template_list[row_index][col_index] == '-':
+                    door_id = f"{row_index}:{col_index}"
+                    self.doors_destination[door_id] = dest_board_ids[0]
+                    dest_board_ids.pop(0)
+                    
+                self.board[row_index][col_index] = template_list[row_index][col_index]
     
     def door_coords(self, board_id):
         for key in self.doors_destination:
@@ -212,21 +239,18 @@ class Hero(Person):
                 self.update_objects()
                 prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
                 
-                
                 self.row = prev_door_row - 1
                 self.col = prev_door_col
                 self.put_on_board()
                 self.printer.clear_screen()
-                
-            elif self.Board.board[UP][self.col] == '#':
-                pass
-            elif self.there_is_obstacle(UP, self.col):
-                pass
-            else:
+            elif self.Board.board[UP][self.col] == ' ':
                 self.Board.board[self.row][self.col] = ' '
                 self.row = UP
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'u'
+            elif self.there_is_obstacle(UP, self.col):
+                pass
+            
         elif direction == 'down':
             if self.Board.board[DOWN][self.col] == '-':
                 current_board_id = self.Board.board_id
@@ -246,15 +270,14 @@ class Hero(Person):
                 self.col = prev_door_col
                 self.put_on_board()
                 self.printer.clear_screen()
-            elif self.Board.board[DOWN][self.col] == '#':
-                pass
-            elif self.there_is_obstacle(DOWN, self.col):
-                pass
-            else:
+            elif self.Board.board[DOWN][self.col] == ' ':
                 self.Board.board[self.row][self.col] = ' '
                 self.row = DOWN
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'd'
+            elif self.there_is_obstacle(DOWN, self.col):
+                pass
+            
         elif direction == 'left':
             if self.Board.board[self.row][LEFT] == '-':
                 current_board_id = self.Board.board_id
@@ -274,15 +297,13 @@ class Hero(Person):
                 self.col = prev_door_col - 1
                 self.put_on_board()
                 self.printer.clear_screen()
-            elif self.Board.board[self.row][LEFT] == '#':
-                pass
-            elif self.there_is_obstacle(self.row, LEFT):
-                pass
-            else:
+            elif self.Board.board[self.row][LEFT] == ' ':
                 self.Board.board[self.row][self.col] = ' '
                 self.col = LEFT
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'l'
+            elif self.there_is_obstacle(self.row, LEFT):
+                pass
         elif direction == 'right':
             if self.Board.board[self.row][RIGHT] == '-':
                 current_board_id = self.Board.board_id
@@ -302,18 +323,16 @@ class Hero(Person):
                 self.col = prev_door_col + 1
                 self.put_on_board()
                 self.printer.clear_screen()
-            elif self.Board.board[self.row][RIGHT] == '#':
-                pass
-            elif self.there_is_obstacle(self.row, RIGHT):
-                pass
-            else:
+            elif self.Board.board[self.row][RIGHT] == ' ':
                 self.Board.board[self.row][self.col] = ' '
                 self.col = RIGHT
                 self.Board.board[self.row][self.col] = 'P'
                 self.direction = 'r'
+            elif self.there_is_obstacle(self.row, RIGHT):
+                pass            
     
     def there_is_obstacle(self, row, col):
-        if self.Board.board[row][col] != ' ' and self.Board.board[row][col] != 'P':
+        if self.Board.board[row][col] in self.all_objects.all_objects_marks:
             object_index = self.Objects.get_object_index(row, col)
             
             if isinstance(object_index, int):
@@ -333,9 +352,20 @@ class AllObjects:
     def __init__(self):
         self.all_objects = {}
         self.current_objects = None
+        self.all_objects_marks = set()
+    
+    def add_objects_marks(self, marks):
+        new_marks = set(marks).difference(self.all_objects_marks)
+        
+        for mark in new_marks:
+            self.all_objects_marks.add(mark)
+        
     
     def add_objects(self, objects_id, objects):
         self.all_objects[objects_id] = objects
+        
+        self.add_objects_marks(objects.marks)        
+        
     
     def set_current_objects(self, objects_id):
         self.current_objects = self.all_objects[objects_id]
@@ -348,9 +378,13 @@ class Objects:
         self.objects_id = objects_id
         self.Board = Board
         self.Printer = Printer
+        self.marks = []
         
     def add_object(self, new_object):
         self.objects_list.append(new_object)
+        
+        if new_object.mark not in self.marks:
+            self.marks.append(new_object.mark)
     
     def get_object_index(self, row, col):
         for index, element in enumerate(self.objects_list):
