@@ -219,117 +219,69 @@ class Hero(Person):
     def move(self, direction):
         self.printer.clear_screen()
         
-        LEFT = self.col - 1
-        RIGHT = self.col + 1
-        UP = self.row - 1
-        DOWN = self.row + 1
-        
         if direction == 'up':
-            if self.Board.board[UP][self.col] == '-':
-                current_board_id = self.Board.board_id
-                self.Board.board[self.row][self.col] = ' '
-                
-                door_id = f"{str(UP)}:{str(self.col)}"
-                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
-                
-                self.all_boards.set_current_board(destination_board_id)
-                self.all_objects.set_current_objects(destination_board_id)
-                self.printer.update_board()
-                self.update_board()
-                self.update_objects()
-                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
-                
-                self.row = prev_door_row - 1
-                self.col = prev_door_col
-                self.put_on_board()
-                self.printer.clear_screen()
-            elif self.Board.board[UP][self.col] == ' ':
-                self.Board.board[self.row][self.col] = ' '
-                self.row = UP
-                self.Board.board[self.row][self.col] = 'P'
-                self.direction = 'u'
-            elif self.there_is_obstacle(UP, self.col):
-                pass
+            next_row = self.row - 1
+            next_col = self.col
             
+            row_door_offset = -1
+            col_door_offset = 0
+            
+            direction = 'u'
         elif direction == 'down':
-            if self.Board.board[DOWN][self.col] == '-':
-                current_board_id = self.Board.board_id
-                self.Board.board[self.row][self.col] = ' '
-                
-                door_id = f"{str(DOWN)}:{str(self.col)}"
-                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
-                
-                self.all_boards.set_current_board(destination_board_id)
-                self.all_objects.set_current_objects(destination_board_id)
-                self.printer.update_board()
-                self.update_board()
-                self.update_objects()
-                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
-                
-                self.row = prev_door_row + 1
-                self.col = prev_door_col
-                self.put_on_board()
-                self.printer.clear_screen()
-            elif self.Board.board[DOWN][self.col] == ' ':
-                self.Board.board[self.row][self.col] = ' '
-                self.row = DOWN
-                self.Board.board[self.row][self.col] = 'P'
-                self.direction = 'd'
-            elif self.there_is_obstacle(DOWN, self.col):
-                pass
+            next_row = self.row + 1
+            next_col = self.col
             
+            row_door_offset = 1
+            col_door_offset = 0
+            
+            direction = 'd'
         elif direction == 'left':
-            if self.Board.board[self.row][LEFT] == '-':
-                current_board_id = self.Board.board_id
-                self.Board.board[self.row][self.col] = ' '
-                
-                door_id = f"{str(self.row)}:{str(LEFT)}"
-                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
-                
-                self.all_boards.set_current_board(destination_board_id)
-                self.all_objects.set_current_objects(destination_board_id)
-                self.printer.update_board()
-                self.update_board()
-                self.update_objects()
-                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
-                
-                self.row = prev_door_row
-                self.col = prev_door_col - 1
-                self.put_on_board()
-                self.printer.clear_screen()
-            elif self.Board.board[self.row][LEFT] == ' ':
-                self.Board.board[self.row][self.col] = ' '
-                self.col = LEFT
-                self.Board.board[self.row][self.col] = 'P'
-                self.direction = 'l'
-            elif self.there_is_obstacle(self.row, LEFT):
-                pass
+            next_row = self.row
+            next_col = self.col - 1
+            
+            row_door_offset = 0
+            col_door_offset = -1
+            
+            direction = 'l'
         elif direction == 'right':
-            if self.Board.board[self.row][RIGHT] == '-':
-                current_board_id = self.Board.board_id
-                self.Board.board[self.row][self.col] = ' '
-                
-                door_id = f"{str(self.row)}:{str(RIGHT)}"
-                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
-                
-                self.all_boards.set_current_board(destination_board_id)
-                self.all_objects.set_current_objects(destination_board_id)
-                self.printer.update_board()
-                self.update_board()
-                self.update_objects()
-                prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
-                
-                self.row = prev_door_row
-                self.col = prev_door_col + 1
-                self.put_on_board()
-                self.printer.clear_screen()
-            elif self.Board.board[self.row][RIGHT] == ' ':
-                self.Board.board[self.row][self.col] = ' '
-                self.col = RIGHT
-                self.Board.board[self.row][self.col] = 'P'
-                self.direction = 'r'
-            elif self.there_is_obstacle(self.row, RIGHT):
-                pass            
+            next_row = self.row
+            next_col = self.col + 1
+            
+            row_door_offset = 0
+            col_door_offset = 1
+            
+            direction = 'r'
+        
+        if self.Board.board[next_row][next_col] == '-':
+            current_board_id = self.Board.board_id
+            
+            self.Board.board[self.row][self.col] = ' '
+            
+            door_id = f"{str(next_row)}:{str(next_col)}"
+            destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+            
+            self.all_boards.set_current_board(destination_board_id)
+            self.all_objects.set_current_objects(destination_board_id)
+            self.printer.update_board()
+            self.update_board()
+            self.update_objects()
+            
+            prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
+            self.row = prev_door_row + row_door_offset
+            self.col = prev_door_col + col_door_offset
+            
+            self.put_on_board()
+            self.printer.clear_screen()
+        elif self.Board.board[next_row][next_col] == ' ':
+            self.Board.board[self.row][self.col] = ' '
+            self.Board.board[next_row][next_col] = 'P'
+            
+            self.row = next_row
+            self.col = next_col
+            
+            self.direction = direction
+        elif self.there_is_obstacle(next_row, next_col):
+            pass      
     
     def there_is_obstacle(self, row, col):
         if self.Board.board[row][col] in self.all_objects.all_objects_marks:
