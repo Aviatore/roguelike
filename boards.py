@@ -1,20 +1,48 @@
-board_5 = '''
+board_4 = '''
 #####################-#########################################################
-#TTTTTT                                                                       #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~( )~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~( )~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~( )~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
+TTTTTT                                                                         
+TYTYY                                                                          
+YTYTTT                                                                         
+TYTTTYTT                                                                       
+TYTTTTYTT                                                                      
+TYYTTYYT                                                                       
+TYTTTT                                                                         
+TYT                                                                            
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~( )~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~( )~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~( )~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                               
+                                                                               
+                                                                               
+                                                          TT                   
+                                                     TT  YYTY                  
+                      TTYTT                        TTYYTTTTTTYY                
+                YYYYTYYTYTYY                    TYYTTTTYYTTTYTYTTTY            
+TTYTTYYYTTYTYTYYYTYTYYYYYYTYYTTYTT      YTYYYTYYTYYTYTTTTTYYYYTYYYYTYYTYYYYTYYT
+YYTYTTTTTYYYYTYYYYTYYTYYYYTYYTTYTTYYYTTYTYTYYYTYTYYYYYYTYYTTYTTTYTYYYYTYYYTYYTY
+TTYTTYYYTTYTYTYYYTYTYYYYYYTYYTTYTTTYTYYYYTYYYTYYTYYTYTTTTTYYYYTYYYYTYYTYYYYTYYY
+'''
+board_5 = '''
 ###############################################################################
+                                                                 TTYYTTYTYYTTTT
+                                                                     TYTTYYTTYT
+                                                                      TTYYYYTTY
+                                                                       TYTTYYTT
+                                                                       TYYTTTYY
+                                                                        TTYYTYY
+                                                                       YTTYTYTY
+                                                                     TTYTTYYYYT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                               
+                                                [][][][][][]                   
+                                                  [][][][][][]                 
+                                                    [][][][]                   
+                                        YTYYYYTT      [][]                     
+                      TTYTT             YYTYYTTTY   [][][][][]YTYTYTYTYTYTTYTTY
+                YYYYTYYTYTYY          YYTYYTY     [][][][][][][][]TTYTYTYTYTYTY
+TTYTTYYYTTYTYTYYYTYTYYYYYYTYYTTYTT      YTYYYTYY[][][][][][][][][]YTYYTYYYYTYYT
+YYTYTTTTTYYYYTYYYYTYYTYYYYTYYTTYTTYYYTTYTYTYYY[][][][][][][][][][][]YYTYYYTYYTY
+TTYTTYYYTTYTYTYYYTYTYYYYYYTYYTTYTTTYTYYYYTYY[][][][][][][][][][]YYYTYYTYYYYTYYY
 '''

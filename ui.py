@@ -36,5 +36,8 @@ class Printer:
         self.Board = self.all_boards.current_board
         
     def print_hero_stats(self):
-        """The function prints the hero statistics, e.g. HP, Mana, Stamina, on the board right-hand-side."""
+        """The function prints the hero statistics, e.g. HP, Mana, Stamina, on the board's right-hand-side."""
+        pass
+    
+    def print_hero_inventory(self):
         pass

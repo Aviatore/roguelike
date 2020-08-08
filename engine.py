@@ -24,6 +24,12 @@ class Board:
         self.board_id = board_id
         self.screen = screen
         self.doors_destination = {}
+        self.freePass_destination = {
+            'left': None,
+            'right': None,
+            'up': None,
+            'down': None
+        }
 
     def board_init(self):
         for row_index in range(self.height):
@@ -62,8 +68,10 @@ class Board:
             
         return template_list
     
-    def create_board_template(self, template, dest_board_ids):
+    def create_board_template(self, template, door_dest_board_ids=None, freePass_destination=None):
         template_list = self.template_to_list(template)
+        if freePass_destination is not None:
+            self.freePass_destination = freePass_destination
         
         self.height = len(template_list)
         self.width = len(template_list[0])
@@ -74,17 +82,47 @@ class Board:
             for col_index in range(self.width):
                 if template_list[row_index][col_index] == '-':
                     door_id = f"{row_index}:{col_index}"
-                    self.doors_destination[door_id] = dest_board_ids[0]
-                    dest_board_ids.pop(0)
+                    self.doors_destination[door_id] = door_dest_board_ids[0]
+                    door_dest_board_ids.pop(0)                    
                     
                 self.board[row_index][col_index] = template_list[row_index][col_index]
     
     def door_coords(self, board_id):
-        for key in self.doors_destination:
-            if self.doors_destination[key] == board_id:
-                return list(map(int, key.split(":")))
+        for door_id in self.doors_destination.keys():
+            if self.doors_destination[door_id] == board_id:
+                return list(map(int, door_id.split(":")))
         
-        return False
+        return False        
+
+
+# class Items:
+#     def __init__(self):
+#         self.visit_number = 0
+#         self.items = [] # Lista obiektów
+        
+
+class Action:
+    def __init__(self):
+        self.visit_number = 0
+        self.required_items = None # Lista obiektów
+        self.label = None
+        self.options = [] # Lista stringów odpowiadających możliwym opcjom
+        self.reactions = {} # Kluczem jest id opcji, wartością jest funkcja lub obiekt klasy Action
+    
+    def add_required_items(self, items):
+        self.required_items = items
+    
+    def add_label(self, label):
+        self.label = label
+    
+    def add_option(self, option):
+        self.options.append(options)
+    
+    def add_options(self, options):
+        self.options.extend(options)
+    
+    def add_reaction(self, option_id, reaction):
+        self.reactions[option_id] = reaction
         
 
 
@@ -97,6 +135,7 @@ class Person:
         self.row = None
         self.col = None
         self.mark = None
+        self.action = None
     
     def put_on_board(self):
         self.Board.board[self.row][self.col] = self.mark
@@ -125,7 +164,35 @@ class Person:
     
     def update_board(self):
         self.Board = self.all_boards.current_board
-
+    
+    def add_action(self, action):
+        self.action = action
+    
+    def react(self, multilinePrinter, hero):
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+                
+            multilinePrinter.clear()
+            multilinePrinter.reset_line()
+            multilinePrinter.print_line(self.action.label())
+            
+            for index, option in enumerate(self.action.options):
+                multilinePrinter.print_line(f"{index + 1}. {option}")
+            
+            multilinePrinter.print_line("0. Exit")
+            multilinePrinter.print_line(" ")
+            multilinePrinter.refresh()
+            
+            if chr(user_input) in self.action.reactions.keys():
+                self.action.reactions[chr(user_input)]
+            elif user_input == ord('0'):
+                multilinePrinter.clear()
+            else:
+                user_input = None
 
 
 class Weapon:
@@ -220,6 +287,7 @@ class Hero(Person):
     
     def move(self, direction):
         self.printer.clear_screen()
+        freePass_direction = None
         
         if direction == 'up':
             next_row = self.row - 1
@@ -227,6 +295,9 @@ class Hero(Person):
             
             row_door_offset = -1
             col_door_offset = 0
+            
+            if next_row == -1:
+                freePass_direction = 'up'
             
             direction = 'u'
         elif direction == 'down':
@@ -236,10 +307,16 @@ class Hero(Person):
             row_door_offset = 1
             col_door_offset = 0
             
+            if next_row == self.Board.height:
+                freePass_direction = 'down'
+            
             direction = 'd'
         elif direction == 'left':
             next_row = self.row
             next_col = self.col - 1
+            
+            if next_col == -1:
+                freePass_direction = 'left'
             
             row_door_offset = 0
             col_door_offset = -1
@@ -252,29 +329,48 @@ class Hero(Person):
             row_door_offset = 0
             col_door_offset = 1
             
+            if next_col == self.Board.width:
+                freePass_direction = 'right'
+            
             direction = 'r'
         
-        if self.Board.board[next_row][next_col] == '-':
-            current_board_id = self.Board.board_id
-            
+        current_board_id = self.Board.board_id
+        
+        try:
+            current_mark = self.Board.board[next_row][next_col]
+        except IndexError:
+            current_mark = None        
+        
+        if current_mark == '-' or freePass_direction is not None:
             self.Board.board[self.row][self.col] = ' '
             
-            door_id = f"{str(next_row)}:{str(next_col)}"
-            destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+            # Getting destination board id
+            if current_mark == '-':
+                door_id = f"{str(next_row)}:{str(next_col)}"
+                destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+            else:
+                destination_board_id = self.Board.freePass_destination[freePass_direction]
             
+            # Updating the new board and board-specific objects
             self.all_boards.set_current_board(destination_board_id)
             self.all_objects.set_current_objects(destination_board_id)
             self.printer.update_board()
             self.update_board()
             self.update_objects()
             
-            prev_door_row, prev_door_col = self.Board.door_coords(current_board_id)
-            self.row = prev_door_row + row_door_offset
-            self.col = prev_door_col + col_door_offset
+            # Setting hero's initial position on the next board
+            if current_mark == '-':
+                current_door_row, current_door_col = self.Board.door_coords(current_board_id)
+                self.row = current_door_row + row_door_offset
+                self.col = current_door_col + col_door_offset
+            else:
+                current_door_row, current_door_col = self.freePass_coords(freePass_direction)
+                self.row = current_door_row
+                self.col = current_door_col
             
             self.put_on_board()
             self.printer.clear_screen()
-        elif self.Board.board[next_row][next_col] == ' ':
+        elif current_mark == ' ':
             self.Board.board[self.row][self.col] = ' '
             self.Board.board[next_row][next_col] = 'P'
             
@@ -283,7 +379,17 @@ class Hero(Person):
             
             self.direction = direction
         elif self.there_is_obstacle(next_row, next_col):
-            pass      
+            pass
+    
+    def freePass_coords(self, freePass_direction):
+        if freePass_direction == 'left':
+            return self.row, self.Board.width - 1
+        elif freePass_direction == 'right':
+            return self.row, 0
+        elif freePass_direction == 'up':
+            return self.Board.height - 1, self.col
+        elif freePass_direction == 'down':
+            return 0, self.col
     
     def there_is_obstacle(self, row, col):
         if self.Board.board[row][col] in self.all_objects.all_objects_marks:
