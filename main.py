@@ -33,7 +33,7 @@ def main(screen):
     board3.create_board(b1=[25,0], b2=[5,0])
     
     board4 = engine.Board('b4', screen)
-    board4.create_board_template(board4.template_to_list(boards.board_5), ['b1'])
+    board4.create_board_template(boards.board_5, ['b1'])
     
     all_boards.add_board(board1)
     all_boards.add_board(board2)

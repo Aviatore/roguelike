@@ -62,7 +62,9 @@ class Board:
             
         return template_list
     
-    def create_board_template(self, template_list, dest_board_ids):
+    def create_board_template(self, template, dest_board_ids):
+        template_list = self.template_to_list(template)
+        
         self.height = len(template_list)
         self.width = len(template_list[0])
         
