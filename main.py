@@ -63,11 +63,12 @@ def main(screen):
     
     objects2 = engine.Objects('b2', board2, printer)
     objects3 = engine.Objects('b3', board3, printer)
+    objects4 = engine.Objects('b4', board4, printer)
     
     all_objects.add_objects('b1', objects1)
     all_objects.add_objects('b2', objects2)
     all_objects.add_objects('b3', objects3)
-    all_objects.add_objects('b4', objects3)
+    all_objects.add_objects('b4', objects4)
     
     all_objects.set_current_objects('b1')
     
