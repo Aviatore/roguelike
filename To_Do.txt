@@ -1,0 +1,35 @@
+1) Stworzyć nową klasę Action:
+- Klasa Action będzie miała customową funkcję react(), która będzie wykoywała się w pętli drukując
+  możliwe opcje i reagując na wybór gracza.
+
+- Klasa Action umożliwia ustawienie opcji oraz reakcji na każdą z nich.
+
+- Z poziomu pliku main.py będzie można stworzyć obiekt ogólnej postaci, po czym stworzyć dla niej zestaw
+  możliwych akcji.
+
+- Obiekty stworzone w oparciu o klasę Action będą przechowywane w słowniku obiektu postaci (nie Hero).
+  - Kluczami będą identyfikatory innych obiektów lub wykonanych czynności.
+  - Wartościami będą odpowiednie obiekty klasy Action.
+
+- W zależności od zawartości ekwipunku bohatera, przechowującego identyfikatory obiektów lub
+  wykonanych czynności, będzie wykonywana odpowiednia reakcja postaci, którą napotka bohater.
+
+2) Poprawić wygląd okna wiadomości poniżej tablicy.
+
+3) Implementacja okna statystyk bohatera:
+- odpowiednia funkcja mogłaby być zaimplementowana w obrębie klasy bohatera i byłaby wywoływana
+  z poziomu pliku main.py po obsłudze ruchu bohatera.
+
+4) Implementacja obsługi ekwipunku bohatera:
+- funkcja mogłaby być zaimplementowana w obrębie klasy bohatera.
+
+5) Dodać wyświetlanie nazwy tablicy/planszy ponad nią.
+
+6) Stworzyć początkowy ekran z wyborem gildi postaci.
+
+
+
+Uwagi:
+1) Obiekty postaci/przedmiotów można stworzyć w osobnym pliku, podobnie jak wzorce tablic.
+2) Plik main.py ma służyć poskładaniem wszystkich elementów do 'kupy'. Tworzenie elementów
+   ma zostać wykonane w innym miejscu/pliku.
