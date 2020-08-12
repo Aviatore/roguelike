@@ -223,11 +223,11 @@ class Inventory:
     
     def put_on_weapon(self, weapon):
         self.weapon = weapon
-        self.Hero.dmg = self.Hero.dmg + weapon.dmg
+        self.Hero.dmg = self.Hero.dmg + self.weapon.dmg
     
     def put_down_weapon(self):
         self.weapon = None
-        self.Hero.dmg = self.Hero.dmg - weapon.dmg
+        self.Hero.dmg = self.Hero.dmg - self.weapon.dmg
         
     def put_on_armor(self, armor):
         self.armor = armor
@@ -235,7 +235,7 @@ class Inventory:
         
     def put_down_armor(self):
         self.armor = None
-        self.Hero.protection = self.Hero.protection - armor.protection
+        self.Hero.protection = self.Hero.protection - self.armor.protection
 
 
 
@@ -253,7 +253,7 @@ class Backpack:
         elif item_type == 'food':
             self.foods.append(item)
     
-    def drop_item(self, item_type, index):
+    def drop_item(self, item_type, item):
         if item_type == 'weapon':        
             self.weapons.pop(item)
         elif item_type == 'armor':
