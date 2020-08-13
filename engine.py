@@ -104,19 +104,19 @@ class Board:
 class Action:
     def __init__(self):
         self.visit_number = 0
-        self.required_items = None # Lista obiektów
+        self.required_items = [] # Lista obiektów
         self.label = None
         self.options = [] # Lista stringów odpowiadających możliwym opcjom
         self.reactions = {} # Kluczem jest id opcji, wartością jest funkcja lub obiekt klasy Action
     
-    def add_required_items(self, items):
-        self.required_items = items
+    def add_required_items(self, item):
+        self.required_items.append(item)
     
     def add_label(self, label):
         self.label = label
     
     def add_option(self, option):
-        self.options.append(options)
+        self.options.append(option)
     
     def add_options(self, options):
         self.options.extend(options)
@@ -124,6 +124,45 @@ class Action:
     def add_reaction(self, option_id, reaction):
         self.reactions[option_id] = reaction
         
+    def react(self, hero, multilinePrinter):
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            multilinePrinter.clear()
+            multilinePrinter.reset_line()
+            multilinePrinter.print_line(self.label)
+            
+            if len(self.options) > 0:
+                for index, option in enumerate(self.options):
+                    multilinePrinter.print_line(f"{index + 1}. {option}")
+                
+                multilinePrinter.print_line("0. Exit")
+                
+                user_input = multilinePrinter.Printer.screen.getch()
+        
+                if not str(chr(user_input)).isdigit():
+                    user_input = None
+                    continue
+            
+                user_input_chr = chr(user_input)
+                
+                user_input_int = int(user_input_chr)
+                
+                if user_input_int in list(range(1, len(self.options) + 1)):
+                    self.reactions[user_input_chr].react(hero, multilinePrinter)
+                elif user_input_int == 0:
+                    multilinePrinter.clear()
+                    return
+                else:
+                    user_input = None
+                        
+                next_round = True
+            else:
+                multilinePrinter.Printer.screen.getch()
+                multilinePrinter.clear()
+                user_input = ""
+            
 
 
 class Person:
@@ -135,7 +174,6 @@ class Person:
         self.row = None
         self.col = None
         self.mark = None
-        self.action = None
     
     def put_on_board(self):
         self.Board.board[self.row][self.col] = self.mark
@@ -164,35 +202,76 @@ class Person:
     
     def update_board(self):
         self.Board = self.all_boards.current_board
+        
+    def set_mark(self, mark):
+        self.mark = mark
+    
+    def set_name(self, name):
+        self.name = name
+    
+    def set_position(self, row, col):
+        self.row = row
+        self.col = col
+        self.put_on_board()
+
+
+class Person_custom:
+    def __init__(self, object_type, all_boards, printer):
+        self.type = object_type
+        self.all_boards = all_boards
+        self.Board = self.all_boards.current_board
+        self.name = None
+        self.row = None
+        self.col = None
+        self.mark = None
+        self.action = None
+        self.printer = printer
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+    
+    def put_on_board(self):
+        self.Board.board[self.row][self.col] = self.mark
+    
+    def object_random_position(self):       
+        search_coords = True
+        
+        while search_coords:
+            row_random = random.randint(1, self.Board.height - 1)
+            col_random = random.randint(1, self.Board.width - 1)
+            
+            try:
+                if self.Board.board[row_random][col_random] == ' ':
+                    self.Board.board[row_random][col_random] = self.mark
+                    self.row = row_random
+                    self.col = col_random
+                    search_coords = False
+            except:
+                self.Board.screen.addstr(5, 5, f"DEBUG: {self.type}")
+                self.Board.screen.getch()
+    
+    def random_range_values(self, basic_value, divider):
+        min_max = int(basic_value / divider)
+        
+        return random.randint(basic_value - min_max, basic_value + min_max)
+    
+    def update_board(self):
+        self.Board = self.all_boards.current_board
+        
+    def set_mark(self, mark):
+        self.mark = mark
+    
+    def set_name(self, name):
+        self.name = name
+    
+    def set_position(self, row, col):
+        self.row = row
+        self.col = col
+        self.put_on_board()
     
     def add_action(self, action):
         self.action = action
     
-    def react(self, multilinePrinter, hero):
-        user_input = None
-        next_round = False
-        
-        while user_input is None:
-            if next_round:
-                user_input = self.printer.screen.getch()
-                
-            multilinePrinter.clear()
-            multilinePrinter.reset_line()
-            multilinePrinter.print_line(self.action.label())
-            
-            for index, option in enumerate(self.action.options):
-                multilinePrinter.print_line(f"{index + 1}. {option}")
-            
-            multilinePrinter.print_line("0. Exit")
-            multilinePrinter.print_line(" ")
-            multilinePrinter.refresh()
-            
-            if chr(user_input) in self.action.reactions.keys():
-                self.action.reactions[chr(user_input)]
-            elif user_input == ord('0'):
-                multilinePrinter.clear()
-            else:
-                user_input = None
+    def react(self, hero):
+        self.action.react(hero, self.multilinePrinter)
 
 
 class Weapon:

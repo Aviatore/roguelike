@@ -73,18 +73,25 @@ def main(screen):
     objects1.add_object(orc)
     
     ##
-    # def action1()
-    # action1 = Action()
-    # action1.add_label('Hello stranger.')
-    # action1.add_option('Hello.')
-    # action1.add_option('Might your own buisness.')
-    # action1.add_reaction('1', )
+    hello_answer = engine.Action()
+    hello_answer.add_label('It is nice to see you. May I ask you for a help?')
     
-    # stranger = engine.Person(all_boards, printer)
-    # stranger.set_mark('?')
-    # stranger.set_name('Edmund')
-    # stranger.set_position(10, 10)
-    # stranger.set_action()
+    notAwesome_answer = engine.Action()
+    notAwesome_answer.add_label('It was not nice. Good bye.')
+    
+    action1 = engine.Action()
+    action1.add_label('Hello stranger.')
+    action1.add_option('Hello.')
+    action1.add_option('Might your own buisness.')
+    action1.add_reaction('1', hello_answer)
+    action1.add_reaction('2', notAwesome_answer)
+    
+    stranger = engine.Person_custom('Human', all_boards, printer)
+    stranger.set_mark('?')
+    stranger.set_name('Edmund')
+    stranger.set_position(10, 10)
+    stranger.add_action(action1)
+    objects1.add_object(stranger)
     ##
     
     objects2 = engine.Objects('b2', board2, printer)
