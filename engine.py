@@ -104,13 +104,25 @@ class Board:
 class Action:
     def __init__(self):
         self.visit_number = 0
-        self.required_items = [] # Lista obiektów
+        self.task_req_item_ids = {}
+        self.task_gift_items = {}
         self.label = None
         self.options = [] # Lista stringów odpowiadających możliwym opcjom
         self.reactions = {} # Kluczem jest id opcji, wartością jest funkcja lub obiekt klasy Action
+        self.task_react_req_item = {}
+        self.task_react_gift_item = {}
     
-    def add_required_items(self, item):
-        self.required_items.append(item)
+    def add_task_req_item_ids(self, task_id, item_id):
+        if task_id in self.task_req_item_ids.keys():
+            self.task_req_item_ids[task_id].append(item_id)
+        else:
+            self.task_req_item_ids[task_id] = [item_id]
+    
+    def add_task_gift_items(self, task_id, item):
+        if task_id in self.task_gift_items.keys():
+            self.task_gift_items[task_id].append(item)
+        else:
+            self.task_gift_items[task_id] = [item]
     
     def add_label(self, label):
         self.label = label
@@ -123,15 +135,44 @@ class Action:
     
     def add_reaction(self, option_id, reaction):
         self.reactions[option_id] = reaction
+    
+    def add_task_react_req_item(self, task_id, reaction):
+        self.task_react_req_item[task_id] = reaction
+    
+    def add_task_react_gift_item(self, task_id, reaction):
+        self.task_react_gift_item[task_id] = reaction
+    
         
     def react(self, hero, multilinePrinter):
         user_input = None
         next_round = False
+        stop = False
         
         while user_input is None:
+            for task_id in self.task_req_item_ids.keys():
+                for item_id in self.task_req_item_ids[task_id]:
+                    if self.task_req_item_ids[task_id].count(item_id) == hero.Backpack.get_amount('other', item_id):
+                        if self.task_gift_items[task_id]:
+                            for item in self.task_gift_items[task_id]:                                
+                                item_type = item.type
+                                item = item
+                                hero.Backpack.add_item(item_type, item)
+                                hero.Backpack.drop_item_by_id('other', item_id)
+                        
+                        self.task_react_req_item[task_id].react(hero, multilinePrinter)
+                        multilinePrinter.print_line(f"You have got a {item.name}.")
+                        stop = True
+                        
+            if stop:
+                multilinePrinter.Printer.screen.getch()
+                multilinePrinter.clear()
+                user_input = ""
+                continue      
+            
             multilinePrinter.clear()
             multilinePrinter.reset_line()
             multilinePrinter.print_line(self.label)
+            
             
             if len(self.options) > 0:
                 for index, option in enumerate(self.options):
@@ -159,6 +200,15 @@ class Action:
                         
                 next_round = True
             else:
+                if len(self.reactions) > 0:
+                    multilinePrinter.print_line('Press ENTER to continue ...')
+                    multilinePrinter.Printer.screen.getch()
+                    self.reactions['1'].react(hero, multilinePrinter)
+                    
+                    if self.task_react_gift_item[task_id]:
+                            self.task_react_gift_item[task_id].react(hero, multilinePrinter)
+                    
+                    
                 multilinePrinter.Printer.screen.getch()
                 multilinePrinter.clear()
                 user_input = ""
@@ -275,9 +325,11 @@ class Person_custom:
 
 
 class Weapon:
-    def __init__(self, name, dmg):
+    def __init__(self, id, name, dmg):
         self.name = name
         self.dmg = dmg
+        self.id = id
+        self.type = 'weapon'
     
     def set_dmg(self, dmg):
         self.dmg = dmg
@@ -285,14 +337,58 @@ class Weapon:
 
 
 class Armor:
-    def __init__(self, name, protection):
+    def __init__(self, id, name, protection):
         self.name = name
         self.protection = protection
+        self.id = id
+        self.type = 'armor'
     
     def set_protection(self, protection):
         self.protection = protection
 
 
+class Item(Person):
+    def __init__(self, all_boards, printer, id, name):
+        super().__init__('other', all_boards)
+        self.mark = 'I'
+        self.id = id
+        self.name = name
+        self.printer = printer
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+    
+    def react(self, hero):
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+                
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            self.multilinePrinter.print_line(f"There is an {self.name} on the ground.")
+            self.multilinePrinter.print_line(f"1. Pick up {self.name}.")
+            self.multilinePrinter.print_line("0. Exit")
+            self.multilinePrinter.print_line(" ")
+            self.multilinePrinter.refresh()
+        
+            if user_input == ord('1'):
+                hero.Backpack.add_item('other', self)
+                
+                self.multilinePrinter.print_line(f"You put the {self.name} to your backpack.")
+                
+                self.Board.board[self.row][self.col] = ' '
+                
+                self.row = None
+                self.col = None
+                
+                return
+            elif user_input == ord('0'):
+                self.multilinePrinter.clear()
+            else:
+                user_input = None
+            
+            next_round = True
 
 class Inventory:
     def __init__(self, Hero):
@@ -323,6 +419,7 @@ class Backpack:
         self.weapons = []
         self.armors = []
         self.foods = []
+        self.other = []
         
     def add_item(self, item_type, item):
         if item_type == 'weapon':        
@@ -331,6 +428,8 @@ class Backpack:
             self.armors.append(item)
         elif item_type == 'food':
             self.foods.append(item)
+        elif item_type == 'other':
+            self.other.append(item)
     
     def drop_item(self, item_type, item):
         if item_type == 'weapon':        
@@ -339,8 +438,46 @@ class Backpack:
             self.armors.pop(item)
         elif item_type == 'food':
             self.foods.pop(item)
+        elif item_type == 'other':
+            self.other.pop(item)
     
-
+    def drop_item_by_id(self, item_type, item_id):
+        if item_type == 'weapon':        
+            for item in self.other:
+                if item.id == item_id:
+                    self.weapon.remove(item)
+        elif item_type == 'armor':
+            for item in self.other:
+                if item.id == item_id:
+                    self.armor.remove(item)
+        elif item_type == 'food':
+            for item in self.other:
+                if item.id == item_id:
+                    self.food.remove(item)
+        elif item_type == 'other':
+            for item in self.other:
+                if item.id == item_id:
+                    self.other.remove(item)
+    
+    def get_amount(self, item_type, id):
+        if item_type == 'weapon':
+            matched_items = [item for item in self.weapons if item.id == id]
+            return len(matched_items)
+        elif item_type == 'armor':
+            matched_items = [item for item in self.armors if item.id == id]
+            return len(matched_items)
+        elif item_type == 'food':
+            matched_items = [item for item in self.food if item.id == id]
+            return len(matched_items)
+        elif item_type == 'other':
+            matched_items = [item for item in self.other if item.id == id]
+            return len(matched_items)
+    
+class Task:
+    def __init__(self, task_id, label):
+        self.task_id = task_id
+        self.label = label
+        
 
 class Hero(Person):
     def __init__(self, type, all_boards, all_objects, printer):
@@ -357,6 +494,9 @@ class Hero(Person):
         self.Objects = self.all_objects.current_objects
         self.printer = printer
         self.printer.clear_screen()
+        self.tasks = []
+   
+        
     
     def set_hp(self, hp):
         self.hp = hp
@@ -529,8 +669,8 @@ class Objects:
         for index, element in enumerate(self.objects_list):
             if element.row == row and element.col == col:
                 return index
-            elif element.row is None:
-                self.objects_list.remove(element)
+            # elif element.row is None:
+            #     self.objects_list.remove(element)
         
         return False
     

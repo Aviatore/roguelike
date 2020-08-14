@@ -73,8 +73,18 @@ def main(screen):
     objects1.add_object(orc)
     
     ##
+    stolen_ring = engine.Item(all_boards, printer, 'ring', 'ring')
+    stolen_ring.object_random_position()
+    stolen_ring.put_on_board()
+    objects1.add_object(stolen_ring)
+    
+    sword_revard = engine.Weapon('s2', 'Peace-maker', 50)
+    
     hello_answer = engine.Action()
-    hello_answer.add_label('It is nice to see you. May I ask you for a help?')
+    hello_answer.add_label('It is nice to see you. Please, find my stolen ring.')
+    
+    found_ring_reaction = engine.Action()
+    found_ring_reaction.add_label('I see that you have found my ring. Tkank you very much!\nThis is my reward.')
     
     notAwesome_answer = engine.Action()
     notAwesome_answer.add_label('It was not nice. Good bye.')
@@ -85,6 +95,10 @@ def main(screen):
     action1.add_option('Might your own buisness.')
     action1.add_reaction('1', hello_answer)
     action1.add_reaction('2', notAwesome_answer)
+    action1.add_task_req_item_ids('ring', 'ring')
+    action1.add_task_gift_items('ring', sword_revard)
+    action1.add_task_react_req_item('ring', found_ring_reaction)
+    
     
     stranger = engine.Person_custom('Human', all_boards, printer)
     stranger.set_mark('?')
@@ -108,7 +122,7 @@ def main(screen):
     all_objects.set_current_objects('b1')
     
     hero = engine.Hero('fighter', all_boards, all_objects, printer)
-    sword = engine.Weapon('sword', dmg=30)
+    sword = engine.Weapon('s1', 'sword', dmg=30)
     hero.Inventory.put_on_weapon(sword)
     hero.set_hp(100)
     hero.object_random_position()
@@ -129,6 +143,16 @@ def main(screen):
             hero.move("left")
         elif user_input == curses.KEY_RIGHT:
             hero.move("right")
+        
+        hero.printer.screen.clear()
+        row = 5
+        for item in hero.Backpack.other:
+            hero.printer.screen.addstr(row, 45, f"Item: {item.name}")
+            row += 1
+        
+        for item in hero.Backpack.weapons:
+            hero.printer.screen.addstr(row, 45, f"Weapon: {item.name}")
+            row += 1
     
         printer.print_board()
         
