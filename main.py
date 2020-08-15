@@ -66,11 +66,17 @@ def main(screen):
     food.put_on_board()
     objects1.add_object(food)
     
-    orc = engine.Orc(all_boards, printer)
-    orc.create_random()
-    orc.object_random_position()
-    orc.put_on_board()
-    objects1.add_object(orc)
+    # orc = engine.Orc(all_boards, printer)
+    # orc.create_random()
+    # orc.object_random_position()
+    # orc.put_on_board()
+    # objects1.add_object(orc)
+    
+    pedestrian1 = engine.Pedestrian(all_boards, printer)
+    pedestrian1.create_random()
+    pedestrian1.object_random_position()
+    pedestrian1.put_on_board()
+    objects1.add_object(pedestrian1)
     
     ##
     stolen_ring = engine.Item(all_boards, printer, 'ring', 'ring')
@@ -82,6 +88,8 @@ def main(screen):
     
     hello_answer = engine.Action()
     hello_answer.add_label('It is nice to see you. Please, find my stolen ring.')
+    
+    
     
     found_ring_reaction = engine.Action()
     found_ring_reaction.add_label('I see that you have found my ring. Tkank you very much!\nThis is my reward.')
@@ -127,7 +135,10 @@ def main(screen):
     hero.set_hp(100)
     hero.object_random_position()
     hero.put_on_board()
+    
+    printer.add_hero(hero)
     printer.print_board()
+    printer.print_hero_stats()
     screen.refresh()
     
     loop = True
@@ -145,14 +156,7 @@ def main(screen):
             hero.move("right")
         
         hero.printer.screen.clear()
-        row = 5
-        for item in hero.Backpack.other:
-            hero.printer.screen.addstr(row, 45, f"Item: {item.name}")
-            row += 1
-        
-        for item in hero.Backpack.weapons:
-            hero.printer.screen.addstr(row, 45, f"Weapon: {item.name}")
-            row += 1
+        printer.print_hero_stats()
     
         printer.print_board()
         

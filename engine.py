@@ -1,6 +1,8 @@
 import ui
 import time
 import random
+import util
+import time
 
 
 class Boards:
@@ -95,11 +97,32 @@ class Board:
         return False        
 
 
-# class Items:
-#     def __init__(self):
-#         self.visit_number = 0
-#         self.items = [] # Lista obiektów
+class Items:
+    def __init__(self):
+        self.items = [] # Lista obiektów
+        self.item_ids = []
+        self.item_number_per_id = {}
+    
+    def add_item(self, item):
+        self.items.append(item)
+        self.__item_id_counter()
+    
+    def __item_id_counter(self):
+        self.item_number_per_id = {}
+        self.item_ids = []
         
+        for item in self.items:
+            self.item_number_per_id[item.id] = self.item_number_per_id.get(item.id, 0) + 1
+        
+        self.item_ids.extend(list(set(self.item_number_per_id.keys())))
+            
+        
+class Task:
+    def __init__(self, task_id, items, gift):
+        self.task_id = task_id
+        self.req_items = items # obiekt klasy Items
+        self.gift_objects = gift # Lista obiektów
+
 
 class Action:
     def __init__(self):
@@ -111,6 +134,7 @@ class Action:
         self.reactions = {} # Kluczem jest id opcji, wartością jest funkcja lub obiekt klasy Action
         self.task_react_req_item = {}
         self.task_react_gift_item = {}
+        self.task = None
     
     def add_task_req_item_ids(self, task_id, item_id):
         if task_id in self.task_req_item_ids.keys():
@@ -141,6 +165,9 @@ class Action:
     
     def add_task_react_gift_item(self, task_id, reaction):
         self.task_react_gift_item[task_id] = reaction
+    
+    def add_task(self, task):
+        self.task = task
     
         
     def react(self, hero, multilinePrinter):
@@ -420,6 +447,7 @@ class Backpack:
         self.armors = []
         self.foods = []
         self.other = []
+        self.money = 0
         
     def add_item(self, item_type, item):
         if item_type == 'weapon':        
@@ -495,8 +523,11 @@ class Hero(Person):
         self.printer = printer
         self.printer.clear_screen()
         self.tasks = []
-   
+        self.rhetoric = 10
         
+   
+    def add_task(self, task):
+        self.tasks.append(task)
     
     def set_hp(self, hp):
         self.hp = hp
@@ -704,7 +735,116 @@ class MultiLinePrinter:
     
     def clear(self):
         self.Printer.clear_screen()
+        self.Printer.print_hero_stats()
         
+
+class Pedestrian(Person):
+    def __init__(self, all_boards, printer):
+        super().__init__('Pedestrian', all_boards)
+        self.mark = 'H'
+        self.name = None
+        self.printer = printer
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+        self.gender = None
+        self.money_amount = None
+        self.politeness = None
+        self.encounter_counter = 0
+        self.hero_questions = {
+            10: [
+                'Hey boss. Can you give me some money?',
+                'Give me some money.',
+            ],
+            15: [
+                'Sorry, may I ask you for some money?'
+            ],
+            20: [
+                'Sorry to bother you, but could you lend me some money?'
+            ]
+        }
+    
+    def create_random(self):
+        NAME_INDEX = 1
+        GENDER_INDEX = 3
+        
+        people_data = util.read_csv('people_names.csv')
+        
+        basic_money_amount = 30
+        money_divider = 4        
+        self.money_amount = self.random_range_values(basic_money_amount, money_divider)
+        
+        basic_politeness = 5
+        polite_divider = 2
+        self.politeness = self.random_range_values(basic_politeness, polite_divider) / 100
+        
+        man_random = random.sample(people_data, 1)[0]
+        self.name = man_random[NAME_INDEX]
+        self.gender = man_random[GENDER_INDEX]
+    
+    def calc_revenue(self, hero):
+        politeness_mod = self.politeness - (self.encounter_counter / 100)
+        politeness_mod = (hero.rhetoric * politeness_mod) + politeness_mod
+        revenue = self.money_amount * politeness_mod
+        
+        return int(revenue)
+
+    def create_questions(self, hero):
+        questions = []
+        for key in sorted(self.hero_questions.keys(), reverse=True):
+            if hero.rhetoric >= key:
+                questions.extend(self.hero_questions[key])
+        
+        return random.sample(questions[0:3], 1)[0]
+    
+    def react(self, hero):
+        self.encounter_counter += 1
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+            
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            self.multilinePrinter.print_line(f"You encountered {self.name}.")
+            self.multilinePrinter.print_line(f"1. Ask {self.name} for a money.")
+            self.multilinePrinter.print_line("0. Exit")
+            self.multilinePrinter.print_line(" ")
+            self.multilinePrinter.refresh()
+            
+            if user_input == ord('1'):
+                revenue = self.calc_revenue(hero)
+                question = self.create_questions(hero)
+                
+                answers = []
+                if self.encounter_counter >= 3:
+                    answers.append("It's you again. I won't give you more money. Go away.")
+                    answers.append(f"You turned back and go away.")
+                else:
+                    answers.append(f"{self.name} gives you {revenue} coins.")
+                
+                self.multilinePrinter.clear()
+                self.multilinePrinter.reset_line()
+                self.multilinePrinter.print_line(f"You: {question}")
+                self.multilinePrinter.refresh()
+                
+                time.sleep(3)
+                
+                for line in answers:
+                    self.multilinePrinter.print_line(line)
+                
+                hero.Backpack.money += revenue
+                # hero.printer.print_hero_stats()
+                
+                self.multilinePrinter.refresh()
+                self.printer.screen.getch()
+                
+            elif user_input == ord('0'):
+                self.multilinePrinter.clear()
+            else:
+                user_input = None
+            
+            next_round = True
 
 
 class Food(Person):
@@ -717,6 +857,7 @@ class Food(Person):
         self.multilinePrinter = MultiLinePrinter(self.printer)
     
     def create_random(self):
+        
         names = ['apple', 'berries', 'pear']
         
         basic_hp = 30

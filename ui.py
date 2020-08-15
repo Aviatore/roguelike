@@ -6,6 +6,10 @@ class Printer:
         self.__OFFSET = 2
         self.curses = curses
         self.colors = {}
+        self.hero = None
+    
+    def add_hero(self, hero):
+        self.hero = hero
 
     def add_colors(self, colors): # np. [['~',1],['Y',2],['T',2]]
         for color_pair in colors:
@@ -13,6 +17,7 @@ class Printer:
     
     def clear_screen(self):
         self.screen.clear()
+            
         self.print_board()
         self.screen.refresh()
         
@@ -37,7 +42,8 @@ class Printer:
         
     def print_hero_stats(self):
         """The function prints the hero statistics, e.g. HP, Mana, Stamina, on the board's right-hand-side."""
-        pass
+        money_stat = f"Money: {self.hero.Backpack.money} coins"
+        self.screen.addstr(0, 2, money_stat)
     
     def print_hero_inventory(self):
         pass
