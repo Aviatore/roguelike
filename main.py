@@ -171,6 +171,8 @@ def main(screen):
         
         curses.flushinp()
         
+        all_objects.recreate()
+        
         time.sleep(0.1)
     
 

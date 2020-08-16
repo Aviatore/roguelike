@@ -690,6 +690,19 @@ class AllObjects:
     
     def set_current_objects(self, objects_id):
         self.current_objects = self.all_objects[objects_id]
+    
+    def recreate(self):
+        for objects in self.all_objects.values():
+            for element in objects.objects_list:
+                if element.type == 'Recycle' and element.row is None:
+                    if element.recreate_timer == 20:
+                        element.create_random()
+                        self.add_objects_marks(element.mark)
+                        element.object_random_position()
+                        element.put_on_board()
+                        element.recreate_timer = 0
+                    else:
+                        element.recreate_timer += 1
 
 
 
@@ -720,6 +733,9 @@ class Objects:
         obj = self.objects_list[object_index]
         
         obj.react(hero)
+    
+    
+
 
 
 
@@ -756,6 +772,7 @@ class Recycle_item(Person):
         self.multilinePrinter = MultiLinePrinter(self.printer)
         self.name = None
         self.amount = None
+        self.recreate_timer = 0
     
     def create_random(self):
         recycle_items = ['Can', 'Bottle']
@@ -777,6 +794,10 @@ class Recycle_item(Person):
         
         self.printer.msg = f"You picked up {self.amount} {name}."
         hero.Backpack.recycles[self.name] += self.amount
+        self.printer.Board.board[self.row][self.col] = ' '
+        self.row = None
+        self.col = None
+        
 
 class Seller(Person):
     def __init__(self, all_boards, printer):
@@ -954,7 +975,7 @@ class Pedestrian(Person):
                     self.multilinePrinter.print_line(line)
                 
                 hero.Backpack.money += revenue
-                # hero.printer.print_hero_stats()
+                hero.printer.print_hero_stats()
                 
                 self.multilinePrinter.refresh()
                 self.printer.screen.getch()
