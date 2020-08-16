@@ -448,6 +448,10 @@ class Backpack:
         self.foods = []
         self.other = []
         self.money = 0
+        self.recycles = {
+            'Can': 0,
+            'Bottle': 0
+        }
         
     def add_item(self, item_type, item):
         if item_type == 'weapon':        
@@ -629,7 +633,11 @@ class Hero(Person):
             
             self.direction = direction
         elif self.there_is_obstacle(next_row, next_col):
-            pass
+            self.Board.board[self.row][self.col] = ' '
+            self.Board.board[next_row][next_col] = 'P'
+            self.row = next_row
+            self.col = next_col
+            self.direction = direction
     
     def freePass_coords(self, freePass_direction):
         if freePass_direction == 'left':
@@ -648,8 +656,11 @@ class Hero(Person):
             if isinstance(object_index, int):
                 
                 self.Objects.react_on_object(object_index, self)
-            
-            return True
+                
+            if self.Board.board[row][col] in ['C', 'B']:
+                return True
+            else:
+                return False
         
         return False
 
@@ -736,7 +747,116 @@ class MultiLinePrinter:
     def clear(self):
         self.Printer.clear_screen()
         self.Printer.print_hero_stats()
+
+class Recycle_item(Person):
+    def __init__(self, all_boards, printer):
+        super().__init__('Recycle', all_boards)
+        self.mark = None
+        self.printer = printer
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+        self.name = None
+        self.amount = None
+    
+    def create_random(self):
+        recycle_items = ['Can', 'Bottle']
+        item_random_name = random.sample(recycle_items, 1)[0]
+        self.name = item_random_name
+        self.mark = item_random_name[0]
+        basic_amount = 3
+        divider = 2
+        self.amount = self.random_range_values(basic_amount, divider)
+    
+    def react(self, hero):
+        self.multilinePrinter.clear()
+        self.multilinePrinter.reset_line()
         
+        if self.amount == 1:
+            name = self.name
+        else:
+            name = self.name + 's'
+        
+        self.printer.msg = f"You picked up {self.amount} {name}."
+        hero.Backpack.recycles[self.name] += self.amount
+
+class Seller(Person):
+    def __init__(self, all_boards, printer):
+        super().__init__('Seller', all_boards)
+        self.mark = 'H'
+        self.name = None
+        self.printer = printer
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+        self.gender = None
+        self.encounter_counter = 0
+        self.stock = {}
+    
+    def create_random(self):
+        NAME_INDEX = 1
+        GENDER_INDEX = 3
+        
+        people_data = util.read_csv('people_names.csv')
+        
+        man_random = random.sample(people_data, 1)[0]
+        self.name = man_random[NAME_INDEX]
+        self.gender = man_random[GENDER_INDEX]
+    
+    def seller_question(self):
+        questions = [
+            'What do you want to buy?'
+        ]
+        
+        return random.sample(questions, 1)[0]
+    
+    def react(self, hero):
+        self.encounter_counter += 1
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+            
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            self.multilinePrinter.print_line(self.seller_question())
+            self.multilinePrinter.print_line(f"1. Ask {self.name} for a money.")
+            self.multilinePrinter.print_line("0. Exit")
+            self.multilinePrinter.print_line(" ")
+            self.multilinePrinter.refresh()
+            
+            if user_input == ord('1'):
+                revenue = self.calc_revenue(hero)
+                question = self.create_questions(hero)
+                
+                answers = []
+                if self.encounter_counter >= 3:
+                    answers.append("It's you again. I won't give you more money. Go away.")
+                    answers.append(f"You turned back and go away.")
+                else:
+                    answers.append(f"{self.name} gives you {revenue} coins.")
+                
+                self.multilinePrinter.clear()
+                self.multilinePrinter.reset_line()
+                self.multilinePrinter.print_line(f"You: {question}")
+                self.multilinePrinter.refresh()
+                
+                time.sleep(3)
+                
+                for line in answers:
+                    self.multilinePrinter.print_line(line)
+                
+                hero.Backpack.money += revenue
+                # hero.printer.print_hero_stats()
+                
+                self.multilinePrinter.refresh()
+                self.printer.screen.getch()
+                
+            elif user_input == ord('0'):
+                self.multilinePrinter.clear()
+            else:
+                user_input = None
+            
+            next_round = True
+
 
 class Pedestrian(Person):
     def __init__(self, all_boards, printer):

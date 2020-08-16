@@ -7,6 +7,12 @@ class Printer:
         self.curses = curses
         self.colors = {}
         self.hero = None
+        self.msg = ""
+        self.row = self.Board.height + 3
+        self.current_row = self.row
+        self.col = 5
+        self.current_col = self.col
+        
     
     def add_hero(self, hero):
         self.hero = hero
@@ -43,7 +49,29 @@ class Printer:
     def print_hero_stats(self):
         """The function prints the hero statistics, e.g. HP, Mana, Stamina, on the board's right-hand-side."""
         money_stat = f"Money: {self.hero.Backpack.money} coins"
-        self.screen.addstr(0, 2, money_stat)
+        msg = f"Coins: {self.hero.Backpack.money}   Cans: {self.hero.Backpack.recycles['Can']}   Bottles: {self.hero.Backpack.recycles['Bottle']}"
+        self.screen.addstr(0, 2, msg)
     
     def print_hero_inventory(self):
         pass
+    
+    def msgBox_print_line(self, msg):
+        self.screen.addstr(self.current_row, self.current_col, msg)
+        self.current_row += 1
+    
+    def msgBox_print_line_cached(self):
+        self.screen.addstr(self.current_row, self.current_col, self.msg)
+        self.msgBox_reset_line()
+        self.msg = ""
+        
+    
+    def msgBox_reset_line(self):
+        self.current_row = self.row
+        self.current_col = self.col
+    
+    def refresh(self):
+        self.screen.refresh()
+    
+    def msgBox_clear(self):
+        self.clear_screen()
+        self.print_hero_stats()

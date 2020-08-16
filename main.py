@@ -78,6 +78,12 @@ def main(screen):
     pedestrian1.put_on_board()
     objects1.add_object(pedestrian1)
     
+    recycle1 = engine.Recycle_item(all_boards, printer)
+    recycle1.create_random()
+    recycle1.object_random_position()
+    recycle1.put_on_board()
+    objects1.add_object(recycle1)
+    
     ##
     stolen_ring = engine.Item(all_boards, printer, 'ring', 'ring')
     stolen_ring.object_random_position()
@@ -159,6 +165,7 @@ def main(screen):
         printer.print_hero_stats()
     
         printer.print_board()
+        printer.msgBox_print_line_cached()
         
         screen.refresh()
         
