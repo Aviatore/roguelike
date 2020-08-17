@@ -764,6 +764,117 @@ class MultiLinePrinter:
         self.Printer.clear_screen()
         self.Printer.print_hero_stats()
 
+
+class Buyer(Person):
+    def __init__(self, all_boards, printer):
+        super().__init__('Buyer', all_boards)
+        self.mark = '!'
+        self.printer = printer
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+        self.name = 'Bruce'
+        self.sell_price = {
+            'Can': 1,
+            'Bottle': 2
+        }
+    
+    def buyer_question(self):
+        questions = [
+            'What do you want to sell?'
+        ]
+        
+        return random.sample(questions, 1)[0]
+
+    def calc_revenue(self, amount, item_type):
+        multiplier = amount // 30
+        
+        if multiplier > 0:
+            return int((self.sell_price[item_type] * multiplier) * amount)
+        else:
+            return int(self.sell_price[item_type] * amount)
+    
+    def sell_reaction(self, item_type, hero):
+        self.multilinePrinter.clear()
+        self.multilinePrinter.reset_line()
+        
+        item_amout = hero.Backpack.recycles[item_type]
+        
+        answers = []
+        if item_amout > 1:
+            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amout} {item_type}s.")
+        else:
+            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amout} {item_type}.")
+        
+        self.multilinePrinter.refresh()
+        time.sleep(2)
+        if item_amout < 5:
+            self.multilinePrinter.print_line(f"{self.name}: You must be joking. I won't buy {item_amout} {item_type}s from you.")
+            self.multilinePrinter.print_line(f"Come back if you collect more.")
+            self.multilinePrinter.refresh()
+            
+            time.sleep(2)
+            self.multilinePrinter.print_line(f"You put your {item_type}s back to you bag and go away.")
+        elif item_amout < 30:
+            self.multilinePrinter.print_line(f"{self.name}: Only {item_amout} {item_type}s?")
+            self.multilinePrinter.print_line(f"I can give you {self.calc_revenue(item_amout, item_type)} coins.")
+            self.multilinePrinter.refresh()
+            
+            time.sleep(2)
+            self.multilinePrinter.print_line(f"You put earnd coins into you wallet.")
+            hero.Backpack.recycles[item_type] = 0
+            hero.Backpack.money += self.calc_revenue(item_amout, item_type)
+        elif item_amout >= 30:
+            self.multilinePrinter.print_line(f"For {item_amount} I can give you {self.calc_revenue(item_amout, item_type)} coins.")
+            self.multilinePrinter.refresh()
+            
+            time.sleep(2)
+            self.multilinePrinter.print_line(f"You put earnd coins into you wallet.")
+            hero.Backpack.recycles[item_type] = 0
+            hero.Backpack.money += self.calc_revenue(item_amout, item_type)
+        
+        self.multilinePrinter.refresh()
+        
+    
+    def react(self, hero):
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+            
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            self.multilinePrinter.print_line(self.buyer_question())
+            self.multilinePrinter.print_line(f"1. Cans")
+            self.multilinePrinter.print_line(f"2. Bottles")
+            self.multilinePrinter.print_line("0. Exit")
+            self.multilinePrinter.print_line(" ")
+            self.multilinePrinter.refresh()
+            
+            if user_input == ord('1'):
+                self.sell_reaction('Can', hero)
+                
+                hero.printer.print_hero_stats()
+                
+                self.multilinePrinter.refresh()
+                self.printer.screen.getch()
+            elif user_input == ord('2'):
+                self.sell_reaction('Bottle', hero)
+                hero.printer.print_hero_stats()
+                
+                self.multilinePrinter.refresh()
+                self.printer.screen.getch()
+                
+            elif user_input == ord('0'):
+                self.multilinePrinter.clear()
+            else:
+                user_input = None
+            
+            next_round = True
+    
+        
+
+
 class Recycle_item(Person):
     def __init__(self, all_boards, printer):
         super().__init__('Recycle', all_boards)

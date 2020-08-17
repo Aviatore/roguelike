@@ -12,19 +12,25 @@ def main(screen):
     curses.init_pair(1, 39, 21) # WATER_COLOR_PAIR
     curses.init_pair(2, 76, -1) # TREE_COLOR_PAIR
     curses.init_pair(3, 247, 15) # ROCK_COLOR_PAIR
+    curses.init_pair(4, 208, -1)
     color_pairs = [
         ['~', 1],
         ['Y', 2],
         ['T', 2],
+        ["`", 2],
         ['#', 3],
         ['[', 3],
-        [']', 3]
+        [']', 3],
+        ['|', 3],
+        ['_', 3],
+        ['"', 4]
     ]
     
     all_boards = engine.Boards()
-    
-    board1 = engine.Board('b1', screen, 20, 40) # <board_id>, screen, <door_row_index>, <door_col_index>
-    board1.create_board(b2=[0, 6], b3=[12,39], b4=[19,10]) # <dest_board_id>=[<door_row_index>,<door_col_index>]
+    board1 = engine.Board('b1', screen)
+    board1.create_board_template(boards.zul_1)
+    # board1 = engine.Board('b1', screen, 20, 40) # <board_id>, screen, <door_row_index>, <door_col_index>
+    # board1.create_board(b2=[0, 6], b3=[12,39], b4=[19,10]) # <dest_board_id>=[<door_row_index>,<door_col_index>]
     
     board2 = engine.Board('b2', screen, 10, 50)
     board2.create_board(b1=[9,4], b3=[5,49])
@@ -37,7 +43,7 @@ def main(screen):
         'left': 'b5',
         'right': 'b6'
     }
-    board4.create_board_template(boards.board_4, door_dest_board_ids=['b1'], freePass_destination=board4_freePass_destination)
+    # board4.create_board_template(boards.board_4, door_dest_board_ids=['b1'], freePass_destination=board4_freePass_destination)
     
     board5 = engine.Board('b5', screen)
     board5_freePass_destination = {
@@ -83,6 +89,10 @@ def main(screen):
     recycle1.object_random_position()
     recycle1.put_on_board()
     objects1.add_object(recycle1)
+    
+    buyer1 = engine.Buyer(all_boards, printer)
+    buyer1.set_position(5, 52)
+    objects1.add_object(buyer1)
     
     ##
     stolen_ring = engine.Item(all_boards, printer, 'ring', 'ring')
