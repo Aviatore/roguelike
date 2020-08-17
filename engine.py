@@ -666,6 +666,123 @@ class Hero(Person):
 
     def update_objects(self):
         self.Objects = self.all_objects.current_objects
+    
+    def find_closest_recycle(self, object_):
+        closest_recycle = None
+        min_distance = None
+        
+        for recycle in [element for element in self.Objects.objects_list if element.type == 'Recycle']:
+            if recycle.row is not None:
+                distance_row = abs(self.row - recycle.row)
+                distance_col = abs(self.col - recycle.col)
+                
+                if min_distance is not None:
+                    if max(distance_row, distance_col) < min_distance:
+                        min_distance = max(distance_row, distance_col)
+                        closest_recycle = recycle
+                else:
+                    min_distance = max(distance_row, distance_col)
+                    closest_recycle = recycle
+        
+        return closest_recycle
+                
+    
+    def find_another_move(self, direction1, direction2, object_):
+        '''direction:
+        0 - up
+        1 - right
+        2 - down
+        3 - left
+        '''
+        if direction1 == 0:
+            if self.Board.board[object_.row + 1][object_.col] == ' ':
+                object_.row += 1
+            else:
+                
+                self.find_another_move(1, object_)
+        elif direction1 == 1:
+            if self.Board.board[object_.row + 1][object_.col] == ' ':
+                object_.row += 1
+            else:
+                self.find_another_move(1, object_)
+    
+    
+    def move_objects(self):    
+        for object_ in [element for element in self.Objects.objects_list if element.type == 'Lump']:                
+            closest_recycle = self.find_closest_recycle(object_)
+            
+            if closest_recycle:
+            
+                loop = True
+                while loop:
+                    row_prev = object_.row
+                    col_prev = object_.col
+                    
+                    if closest_recycle.row == row_prev and closest_recycle.col == col_prev:
+                        closest_recycle.row = None
+                        closest_recycle.col = None
+                        return
+                    
+                    distance_row = closest_recycle.row - row_prev
+                    if distance_row < 0:
+                        vertical_direction = 'u'
+                    elif distance_row == 0:
+                        vertical_direction = None
+                    else:
+                        vertical_direction = 'd'
+                                        
+                    distance_col = closest_recycle.col - col_prev
+                    if distance_col < 0:
+                        horizontal_direction = 'l'
+                    elif distance_col == 0:
+                        horizontal_direction = None
+                    else:
+                        horizontal_direction = 'r'
+                    
+                    
+                    distance_row = abs(distance_row)
+                    distance_col = abs(distance_col)
+                    
+                    # ui.clear_msgbox(board, stdscr)
+
+                    # stdscr.addstr(24, 5, f"distance_row: {distance_row}")
+                    # stdscr.addstr(25, 5, f"distance_col: {distance_col}")
+                    # stdscr.addstr(26, 5, f"counter: {counter}")
+
+                    # stdscr.refresh()
+                    
+                    if distance_row == 0 or distance_row <= distance_col:
+                        if col_prev < closest_recycle.col:
+                            if self.Board.board[object_.row][object_.col + 1] == ' ':
+                                object_.col += 1
+                            else:
+                                pass
+                        else:
+                            if self.Board.board[object_.row][object_.col - 1] == ' ':
+                                object_.col -= 1
+                            else:
+                                pass
+                    elif distance_col == 0 or distance_row >= distance_col:
+                        if row_prev < closest_recycle.row:
+                            if self.Board.board[object_.row + 1][object_.col] == ' ':
+                                object_.row += 1
+                            else:
+                                pass
+                        else:
+                            if self.Board.board[object_.row - 1][object_.col] == ' ':
+                                object_.row -= 1
+                            else:
+                                pass
+                        
+                        
+                        # time.sleep(0.1)
+
+                    self.Board.board[row_prev][col_prev] = ' '
+                    self.Board.board[object_.row][object_.col] = object_.mark
+                        
+
+                    # stdscr.refresh()
+                    loop = False
         
 
 
@@ -988,6 +1105,16 @@ class Seller(Person):
                 user_input = None
             
             next_round = True
+
+
+class Lump(Person):
+    def __init__(self, all_boards, printer):
+        super().__init__('Lump', all_boards)
+        self.mark = 'L'
+        self.name = 'Boris'
+        self.printer = printer
+        self.multilinePrinter = MultiLinePrinter(self.printer)
+    
 
 
 class Pedestrian(Person):

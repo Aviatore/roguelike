@@ -66,11 +66,11 @@ def main(screen):
     
     objects1 = engine.Objects('b1', board1, printer)
 
-    food = engine.Food(all_boards, printer)
-    food.create_random()
-    food.object_random_position()
-    food.put_on_board()
-    objects1.add_object(food)
+    # food = engine.Food(all_boards, printer)
+    # food.create_random()
+    # food.object_random_position()
+    # food.put_on_board()
+    # objects1.add_object(food)
     
     # orc = engine.Orc(all_boards, printer)
     # orc.create_random()
@@ -93,43 +93,48 @@ def main(screen):
     buyer1 = engine.Buyer(all_boards, printer)
     buyer1.set_position(5, 52)
     objects1.add_object(buyer1)
+
+    lump1 = engine.Lump(all_boards, printer)
+    lump1.object_random_position()
+    lump1.put_on_board()
+    objects1.add_object(lump1)
     
     ##
-    stolen_ring = engine.Item(all_boards, printer, 'ring', 'ring')
-    stolen_ring.object_random_position()
-    stolen_ring.put_on_board()
-    objects1.add_object(stolen_ring)
+    # stolen_ring = engine.Item(all_boards, printer, 'ring', 'ring')
+    # stolen_ring.object_random_position()
+    # stolen_ring.put_on_board()
+    # objects1.add_object(stolen_ring)
     
-    sword_revard = engine.Weapon('s2', 'Peace-maker', 50)
+    # sword_revard = engine.Weapon('s2', 'Peace-maker', 50)
     
-    hello_answer = engine.Action()
-    hello_answer.add_label('It is nice to see you. Please, find my stolen ring.')
-    
-    
-    
-    found_ring_reaction = engine.Action()
-    found_ring_reaction.add_label('I see that you have found my ring. Tkank you very much!\nThis is my reward.')
-    
-    notAwesome_answer = engine.Action()
-    notAwesome_answer.add_label('It was not nice. Good bye.')
-    
-    action1 = engine.Action()
-    action1.add_label('Hello stranger.')
-    action1.add_option('Hello.')
-    action1.add_option('Might your own buisness.')
-    action1.add_reaction('1', hello_answer)
-    action1.add_reaction('2', notAwesome_answer)
-    action1.add_task_req_item_ids('ring', 'ring')
-    action1.add_task_gift_items('ring', sword_revard)
-    action1.add_task_react_req_item('ring', found_ring_reaction)
+    # hello_answer = engine.Action()
+    # hello_answer.add_label('It is nice to see you. Please, find my stolen ring.')
     
     
-    stranger = engine.Person_custom('Human', all_boards, printer)
-    stranger.set_mark('?')
-    stranger.set_name('Edmund')
-    stranger.set_position(10, 10)
-    stranger.add_action(action1)
-    objects1.add_object(stranger)
+    
+    # found_ring_reaction = engine.Action()
+    # found_ring_reaction.add_label('I see that you have found my ring. Tkank you very much!\nThis is my reward.')
+    
+    # notAwesome_answer = engine.Action()
+    # notAwesome_answer.add_label('It was not nice. Good bye.')
+    
+    # action1 = engine.Action()
+    # action1.add_label('Hello stranger.')
+    # action1.add_option('Hello.')
+    # action1.add_option('Might your own buisness.')
+    # action1.add_reaction('1', hello_answer)
+    # action1.add_reaction('2', notAwesome_answer)
+    # action1.add_task_req_item_ids('ring', 'ring')
+    # action1.add_task_gift_items('ring', sword_revard)
+    # action1.add_task_react_req_item('ring', found_ring_reaction)
+    
+    
+    # stranger = engine.Person_custom('Human', all_boards, printer)
+    # stranger.set_mark('?')
+    # stranger.set_name('Edmund')
+    # stranger.set_position(10, 10)
+    # stranger.add_action(action1)
+    # objects1.add_object(stranger)
     ##
     
     objects2 = engine.Objects('b2', board2, printer)
@@ -170,6 +175,8 @@ def main(screen):
             hero.move("left")
         elif user_input == curses.KEY_RIGHT:
             hero.move("right")
+        
+        hero.move_objects()
         
         hero.printer.screen.clear()
         printer.print_hero_stats()
