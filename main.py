@@ -2,54 +2,196 @@ import curses
 import engine
 import ui
 import time
+import boards
 
 
-def main(stdscr):
-    stdscr.clear()
-    
+def main(screen):
+    screen.clear()
     curses.curs_set(False)
+    curses.use_default_colors()
+    curses.init_pair(1, 39, 21) # WATER_COLOR_PAIR
+    curses.init_pair(2, 76, -1) # TREE_COLOR_PAIR
+    curses.init_pair(3, 247, 15) # ROCK_COLOR_PAIR
+    curses.init_pair(4, 208, -1)
+    color_pairs = [
+        ['~', 1],
+        ['Y', 2],
+        ['T', 2],
+        ["`", 2],
+        ['#', 3],
+        ['[', 3],
+        [']', 3],
+        ['|', 3],
+        ['_', 3],
+        ['"', 4]
+    ]
     
-    msgbox = [0]
-    objects = []
-    objects_persons = []
+    all_boards = engine.Boards()
+    board1 = engine.Board('b1', screen)
+    board1.create_board_template(boards.zul_1)
+    # board1 = engine.Board('b1', screen, 20, 40) # <board_id>, screen, <door_row_index>, <door_col_index>
+    # board1.create_board(b2=[0, 6], b3=[12,39], b4=[19,10]) # <dest_board_id>=[<door_row_index>,<door_col_index>]
     
-    board = engine.create_board(20, 40)
+    board2 = engine.Board('b2', screen, 10, 50)
+    board2.create_board(b1=[9,4], b3=[5,49])
     
-    objects.append(engine.object_food_create(board))
-    objects.append(engine.object_person_create(board))
+    board3 = engine.Board('b3', screen, 30, 10)
+    board3.create_board(b1=[25,0], b2=[5,0])
     
-    hero = engine.object_hero_create(board)
+    board4 = engine.Board('b4', screen)
+    board4_freePass_destination = {
+        'left': 'b5',
+        'right': 'b6'
+    }
+    # board4.create_board_template(boards.board_4, door_dest_board_ids=['b1'], freePass_destination=board4_freePass_destination)
+    
+    board5 = engine.Board('b5', screen)
+    board5_freePass_destination = {
+        'right': 'b4'
+    }
+    board5.create_board_template(boards.board_5, freePass_destination=board5_freePass_destination)
+    
+    all_boards.add_board(board1)
+    all_boards.add_board(board2)
+    all_boards.add_board(board3)
+    all_boards.add_board(board4)
+    all_boards.add_board(board5)
+    
+    all_boards.set_current_board('b1')
+    
+    printer = ui.Printer(all_boards, curses)
+    printer.add_colors(color_pairs)
+    
+    all_objects = engine.AllObjects()
+    
+    objects1 = engine.Objects('b1', board1, printer)
 
+    # food = engine.Food(all_boards, printer)
+    # food.create_random()
+    # food.object_random_position()
+    # food.put_on_board()
+    # objects1.add_object(food)
+    
+    # orc = engine.Orc(all_boards, printer)
+    # orc.create_random()
+    # orc.object_random_position()
+    # orc.put_on_board()
+    # objects1.add_object(orc)
+    
+    pedestrian1 = engine.Pedestrian(all_boards, printer)
+    pedestrian1.create_random()
+    pedestrian1.object_random_position()
+    pedestrian1.put_on_board()
+    objects1.add_object(pedestrian1)
+    
+    recycle1 = engine.Recycle_item(all_boards, printer)
+    recycle1.create_random()
+    recycle1.object_random_position()
+    recycle1.put_on_board()
+    objects1.add_object(recycle1)
+    
+    buyer1 = engine.Buyer(all_boards, printer)
+    buyer1.set_position(5, 52)
+    objects1.add_object(buyer1)
+
+    lump1 = engine.Lump(all_boards, printer)
+    lump1.object_random_position()
+    lump1.put_on_board()
+    objects1.add_object(lump1)
+    
+    ##
+    # stolen_ring = engine.Item(all_boards, printer, 'ring', 'ring')
+    # stolen_ring.object_random_position()
+    # stolen_ring.put_on_board()
+    # objects1.add_object(stolen_ring)
+    
+    # sword_revard = engine.Weapon('s2', 'Peace-maker', 50)
+    
+    # hello_answer = engine.Action()
+    # hello_answer.add_label('It is nice to see you. Please, find my stolen ring.')
+    
+    
+    
+    # found_ring_reaction = engine.Action()
+    # found_ring_reaction.add_label('I see that you have found my ring. Tkank you very much!\nThis is my reward.')
+    
+    # notAwesome_answer = engine.Action()
+    # notAwesome_answer.add_label('It was not nice. Good bye.')
+    
+    # action1 = engine.Action()
+    # action1.add_label('Hello stranger.')
+    # action1.add_option('Hello.')
+    # action1.add_option('Might your own buisness.')
+    # action1.add_reaction('1', hello_answer)
+    # action1.add_reaction('2', notAwesome_answer)
+    # action1.add_task_req_item_ids('ring', 'ring')
+    # action1.add_task_gift_items('ring', sword_revard)
+    # action1.add_task_react_req_item('ring', found_ring_reaction)
+    
+    
+    # stranger = engine.Person_custom('Human', all_boards, printer)
+    # stranger.set_mark('?')
+    # stranger.set_name('Edmund')
+    # stranger.set_position(10, 10)
+    # stranger.add_action(action1)
+    # objects1.add_object(stranger)
+    ##
+    
+    objects2 = engine.Objects('b2', board2, printer)
+    objects3 = engine.Objects('b3', board3, printer)
+    objects4 = engine.Objects('b4', board4, printer)
+    objects5 = engine.Objects('b5', board5, printer)
+    
+    all_objects.add_objects('b1', objects1)
+    all_objects.add_objects('b2', objects2)
+    all_objects.add_objects('b3', objects3)
+    all_objects.add_objects('b4', objects4)
+    all_objects.add_objects('b5', objects5)
+    
+    all_objects.set_current_objects('b1')
+    
+    hero = engine.Hero('fighter', all_boards, all_objects, printer)
+    sword = engine.Weapon('s1', 'sword', dmg=30)
+    hero.Inventory.put_on_weapon(sword)
+    hero.set_hp(100)
+    hero.object_random_position()
+    hero.put_on_board()
+    
+    printer.add_hero(hero)
+    printer.print_board()
+    printer.print_hero_stats()
+    screen.refresh()
+    
     loop = True
     
     while loop:
-        user_input = stdscr.getch()
+        user_input = screen.getch()
         
         if user_input == curses.KEY_UP:
-            engine.move_hero(board, hero, "up", objects, stdscr, msgbox)
+            hero.move("up")
         elif user_input == curses.KEY_DOWN:
-            engine.move_hero(board, hero, "down", objects, stdscr, msgbox)
+            hero.move("down")
         elif user_input == curses.KEY_LEFT:
-            engine.move_hero(board, hero, "left", objects, stdscr, msgbox)
+            hero.move("left")
         elif user_input == curses.KEY_RIGHT:
-            engine.move_hero(board, hero, "right", objects, stdscr, msgbox)
-
-        engine.move_objects(board, objects, hero, stdscr, msgbox)
+            hero.move("right")
         
-        if msgbox[0] > 1:
-            msgbox[0] -= 1
-        elif msgbox[0] == 1:
-            stdscr.clear()
-            msgbox[0] -= 1
+        hero.move_objects()
         
-        ui.print_board(board, stdscr)
+        hero.printer.screen.clear()
+        printer.print_hero_stats()
+    
+        printer.print_board()
+        printer.msgBox_print_line_cached()
         
-        stdscr.refresh()
+        screen.refresh()
         
         curses.flushinp()
         
-        time.sleep(0.1)
+        all_objects.recreate()
         
+        time.sleep(0.1)
     
+
 if __name__ == "__main__":
     curses.wrapper(main)

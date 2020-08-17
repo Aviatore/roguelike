@@ -1,5 +1,6 @@
 import sys
 import os
+import random
 
 
 def key_pressed():
@@ -31,3 +32,19 @@ def clear_screen():
         os.system('cls')
     else:
         os.system('clear')
+
+
+def read_csv(file_name):
+    output = []
+    
+    with open(file_name, 'r') as file:
+        for line in file:
+            line = line.rstrip()
+            line_splitted = line.split(',')
+            output.append(line_splitted)
+
+    return output
+
+people_data = read_csv('people_names.csv')
+a = random.sample(people_data, 1)
+print(a)
