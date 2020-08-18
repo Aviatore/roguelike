@@ -184,6 +184,8 @@ def main(screen):
         printer.print_board()
         printer.msgBox_print_line_cached()
         
+        printer.screen.addstr(30, 5, f"DEBUG: {hero.dir} {hero.dir_offset} {hero.distance_row} {hero.distance_col} {hero.reverse_offset}")
+        
         screen.refresh()
         
         curses.flushinp()

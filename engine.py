@@ -528,6 +528,14 @@ class Hero(Person):
         self.printer.clear_screen()
         self.tasks = []
         self.rhetoric = 10
+        self.dir = 1
+        self.dir_offset = 0
+        self.distance_row = 0
+        self.distance_col = 0
+        self.closest_row = 0
+        self.closest_col = 0
+        self.reverse_offset = False
+        self.last_visited_coords = []
         
    
     def add_task(self, task):
@@ -685,31 +693,58 @@ class Hero(Person):
                     closest_recycle = recycle
         
         return closest_recycle
-                
     
-    def find_another_move(self, direction1, direction2, object_):
-        '''direction:
-        0 - up
-        1 - right
-        2 - down
-        3 - left
-        '''
-        if direction1 == 0:
-            if self.Board.board[object_.row + 1][object_.col] == ' ':
-                object_.row += 1
-            else:
-                
-                self.find_another_move(1, object_)
-        elif direction1 == 1:
-            if self.Board.board[object_.row + 1][object_.col] == ' ':
-                object_.row += 1
-            else:
-                self.find_another_move(1, object_)
+    def add_coords(self, row, col):
+        self.last_visited_coords.append([row, col])
+        
+        if len(self.last_visited_coords) > 200:
+            self.last_visited_coords.pop(0)
     
+    def reverse_offset_direction(self):
+        if self.reverse_offset:
+            self.reverse_offset = False
+        else:
+            self.reverse_offset = True
+    
+    def add_offset(self):
+        if self.reverse_offset:
+            if self.dir_offset > 0:
+                self.dir_offset -= 1
+            else:
+                self.dir_offset = 3
+        else:        
+            if self.dir_offset < 3:
+                self.dir_offset += 1
+            else:
+                self.dir_offset = 0
+    
+    def reduce_offset(self):
+        if self.reverse_offset:
+            if self.dir_offset < 3:
+                self.dir_offset += 1
+            else:
+                self.dir_offset = 0
+        else:
+            if self.dir_offset > 0:
+                self.dir_offset -= 1
+            else:
+                self.dir_offset = 0
+    
+    def get_dir_offset(self):
+        return (self.dir + self.dir_offset) % 4
     
     def move_objects(self):    
         for object_ in [element for element in self.Objects.objects_list if element.type == 'Lump']:                
             closest_recycle = self.find_closest_recycle(object_)
+            if closest_recycle:
+                self.closest_row = closest_recycle.row
+            else:
+                self.closest_row = 'None'
+            
+            if closest_recycle:
+                self.closest_col = closest_recycle.col
+            else:
+                self.closest_col = 'None'
             
             if closest_recycle:
             
@@ -718,70 +753,90 @@ class Hero(Person):
                     row_prev = object_.row
                     col_prev = object_.col
                     
-                    if closest_recycle.row == row_prev and closest_recycle.col == col_prev:
+                    
+                    if abs(closest_recycle.row - row_prev) <= 1 and abs(closest_recycle.col - col_prev) <= 1:
+                        self.printer.Board.board[closest_recycle.row][closest_recycle.col] = ' '
                         closest_recycle.row = None
                         closest_recycle.col = None
                         return
                     
-                    distance_row = closest_recycle.row - row_prev
-                    if distance_row < 0:
-                        vertical_direction = 'u'
-                    elif distance_row == 0:
-                        vertical_direction = None
-                    else:
-                        vertical_direction = 'd'
+                    distance_row = abs(closest_recycle.row - row_prev)
+                    self.distance_row = distance_row
                                         
-                    distance_col = closest_recycle.col - col_prev
-                    if distance_col < 0:
-                        horizontal_direction = 'l'
-                    elif distance_col == 0:
-                        horizontal_direction = None
-                    else:
-                        horizontal_direction = 'r'
-                    
-                    
-                    distance_row = abs(distance_row)
-                    distance_col = abs(distance_col)
-                    
-                    # ui.clear_msgbox(board, stdscr)
+                    distance_col = abs(closest_recycle.col - col_prev)
+                    self.distance_col = distance_col
 
-                    # stdscr.addstr(24, 5, f"distance_row: {distance_row}")
-                    # stdscr.addstr(25, 5, f"distance_col: {distance_col}")
-                    # stdscr.addstr(26, 5, f"counter: {counter}")
-
-                    # stdscr.refresh()
-                    
-                    if distance_row == 0 or distance_row <= distance_col:
+                    if distance_row == 0:
                         if col_prev < closest_recycle.col:
-                            if self.Board.board[object_.row][object_.col + 1] == ' ':
-                                object_.col += 1
-                            else:
-                                pass
+                            self.dir = 1
                         else:
-                            if self.Board.board[object_.row][object_.col - 1] == ' ':
-                                object_.col -= 1
-                            else:
-                                pass
-                    elif distance_col == 0 or distance_row >= distance_col:
+                            self.dir = 3
+                    elif distance_row < distance_col and self.dir_offset == 0:
+                        if col_prev < closest_recycle.col:
+                            self.dir = 1
+                        else:
+                            self.dir = 3
+                    elif distance_col == 0:
                         if row_prev < closest_recycle.row:
-                            if self.Board.board[object_.row + 1][object_.col] == ' ':
-                                object_.row += 1
-                            else:
-                                pass
+                            self.dir = 2
                         else:
-                            if self.Board.board[object_.row - 1][object_.col] == ' ':
+                            self.dir = 0
+                    elif distance_row > distance_col and self.dir_offset == 0:
+                        if row_prev < closest_recycle.row:
+                            self.dir = 2
+                        else:
+                            self.dir = 0
+                    elif distance_row == distance_row and self.dir_offset == 0:
+                        if self.dir == 1:
+                            self.dir = 1
+                        elif self.dir == 3:
+                            self.dir = 3
+                        elif self.dir == 0:
+                            self.dir = 0
+                        elif self.dir == 2:
+                            self.dir = 2                        
+                    
+                    row_tmp = object_.row
+                    col_tmp = object_.col
+                    find_best_way = True
+                    while find_best_way:
+                        if self.get_dir_offset() == 0:
+                            if self.Board.board[row_tmp - 1][col_tmp] == ' ':
                                 object_.row -= 1
+                                self.reduce_offset()
+                                find_best_way = False
                             else:
-                                pass
-                        
-                        
-                        # time.sleep(0.1)
-
+                                self.add_offset()
+                        elif self.get_dir_offset() == 1:
+                            if self.Board.board[row_tmp][col_tmp + 1] == ' ':
+                                object_.col += 1
+                                self.reduce_offset()
+                                find_best_way = False
+                            else:
+                                self.add_offset()
+                        elif self.get_dir_offset() == 2:
+                            if self.Board.board[row_tmp + 1][col_tmp] == ' ':
+                                object_.row += 1
+                                self.reduce_offset()
+                                find_best_way = False
+                            else:
+                                self.add_offset()
+                        elif self.get_dir_offset() == 3:
+                            if self.Board.board[row_tmp][col_tmp - 1] == ' ':
+                                object_.col -= 1
+                                self.reduce_offset()
+                                find_best_way = False
+                            else:
+                                self.add_offset()
+                    
                     self.Board.board[row_prev][col_prev] = ' '
                     self.Board.board[object_.row][object_.col] = object_.mark
-                        
+                    
+                    self.add_coords(object_.row, object_.col)
+                    
+                    if self.last_visited_coords.count([object_.row, object_.col]) > 4:
+                        self.reverse_offset_direction()
 
-                    # stdscr.refresh()
                     loop = False
         
 
