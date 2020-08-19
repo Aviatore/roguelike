@@ -95,6 +95,7 @@ def main(screen):
     objects1.add_object(buyer1)
 
     lump1 = engine.Lump(all_boards, printer)
+    lump1.create_random()
     lump1.object_random_position()
     lump1.put_on_board()
     objects1.add_object(lump1)
@@ -151,8 +152,8 @@ def main(screen):
     all_objects.set_current_objects('b1')
     
     hero = engine.Hero('fighter', all_boards, all_objects, printer)
-    sword = engine.Weapon('s1', 'sword', dmg=30)
-    hero.Inventory.put_on_weapon(sword)
+    # sword = engine.Weapon('s1', 'sword', dmg=30)
+    # hero.Inventory.put_on_weapon(sword)
     hero.set_hp(100)
     hero.object_random_position()
     hero.put_on_board()
@@ -184,7 +185,7 @@ def main(screen):
         printer.print_board()
         printer.msgBox_print_line_cached()
         
-        printer.screen.addstr(30, 5, f"DEBUG: {hero.dir} {hero.dir_offset} {hero.distance_row} {hero.distance_col} {hero.reverse_offset}")
+        # printer.screen.addstr(30, 5, f"DEBUG: {hero.dir} {hero.dir_offset} {hero.distance_row} {hero.distance_col} {hero.reverse_offset}")
         
         screen.refresh()
         

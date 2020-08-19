@@ -357,9 +357,16 @@ class Weapon:
         self.dmg = dmg
         self.id = id
         self.type = 'weapon'
+        self.fight_messages = []
     
     def set_dmg(self, dmg):
         self.dmg = dmg
+    
+    def add_fight_messages(self, msg):
+        self.fight_messages.append(msg)
+    
+    def fight_message(self):
+        return random.sample(self.fight_messages, 1)[0]
 
 
 
@@ -516,7 +523,7 @@ class Hero(Person):
         super().__init__(type, all_boards)
         self.mark = 'P'
         self.hp = None
-        self.dmg = 0
+        self.dmg = 40
         self.protection = None
         self.walk_speed = 1
         self.direction = None
@@ -536,7 +543,13 @@ class Hero(Person):
         self.closest_col = 0
         self.reverse_offset = False
         self.last_visited_coords = []
+        self.fight_messages = [
+            'You take a swing and punch {name}.',
+            'You hit {name} with a fist.'
+        ]
         
+    def fight_message(self):
+        return random.sample(self.fight_messages, 1)[0]
    
     def add_task(self, task):
         self.tasks.append(task)
@@ -734,7 +747,7 @@ class Hero(Person):
         return (self.dir + self.dir_offset) % 4
     
     def move_objects(self):    
-        for object_ in [element for element in self.Objects.objects_list if element.type == 'Lump']:                
+        for object_ in [element for element in self.Objects.objects_list if element.type == 'Lumps']:                
             closest_recycle = self.find_closest_recycle(object_)
             if closest_recycle:
                 self.closest_row = closest_recycle.row
@@ -968,40 +981,40 @@ class Buyer(Person):
         self.multilinePrinter.clear()
         self.multilinePrinter.reset_line()
         
-        item_amout = hero.Backpack.recycles[item_type]
+        item_amount = hero.Backpack.recycles[item_type]
         
         answers = []
-        if item_amout > 1:
-            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amout} {item_type}s.")
+        if item_amount > 1:
+            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amount} {item_type}s.")
         else:
-            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amout} {item_type}.")
+            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amount} {item_type}.")
         
         self.multilinePrinter.refresh()
         time.sleep(2)
-        if item_amout < 5:
-            self.multilinePrinter.print_line(f"{self.name}: You must be joking. I won't buy {item_amout} {item_type}s from you.")
+        if item_amount < 5:
+            self.multilinePrinter.print_line(f"{self.name}: You must be joking. I won't buy {item_amount} {item_type}s from you.")
             self.multilinePrinter.print_line(f"Come back if you collect more.")
             self.multilinePrinter.refresh()
             
             time.sleep(2)
             self.multilinePrinter.print_line(f"You put your {item_type}s back to you bag and go away.")
-        elif item_amout < 30:
-            self.multilinePrinter.print_line(f"{self.name}: Only {item_amout} {item_type}s?")
-            self.multilinePrinter.print_line(f"I can give you {self.calc_revenue(item_amout, item_type)} coins.")
+        elif item_amount < 30:
+            self.multilinePrinter.print_line(f"{self.name}: Only {item_amount} {item_type}s?")
+            self.multilinePrinter.print_line(f"I can give you {self.calc_revenue(item_amount, item_type)} coins.")
             self.multilinePrinter.refresh()
             
             time.sleep(2)
             self.multilinePrinter.print_line(f"You put earnd coins into you wallet.")
             hero.Backpack.recycles[item_type] = 0
-            hero.Backpack.money += self.calc_revenue(item_amout, item_type)
-        elif item_amout >= 30:
-            self.multilinePrinter.print_line(f"For {item_amount} I can give you {self.calc_revenue(item_amout, item_type)} coins.")
+            hero.Backpack.money += self.calc_revenue(item_amount, item_type)
+        elif item_amount >= 30:
+            self.multilinePrinter.print_line(f"For {item_amount} I can give you {self.calc_revenue(item_amount, item_type)} coins.")
             self.multilinePrinter.refresh()
             
             time.sleep(2)
             self.multilinePrinter.print_line(f"You put earnd coins into you wallet.")
             hero.Backpack.recycles[item_type] = 0
-            hero.Backpack.money += self.calc_revenue(item_amout, item_type)
+            hero.Backpack.money += self.calc_revenue(item_amount, item_type)
         
         self.multilinePrinter.refresh()
         
@@ -1166,9 +1179,220 @@ class Lump(Person):
     def __init__(self, all_boards, printer):
         super().__init__('Lump', all_boards)
         self.mark = 'L'
-        self.name = 'Boris'
+        self.name = None
+        self.dmg = 20
+        self.hp = 50
         self.printer = printer
         self.multilinePrinter = MultiLinePrinter(self.printer)
+        
+    
+    def create_random(self):
+        names = ['Boris', 'Nikita', 'Andrei', 'Vasily', 'Vlad', 'Dmitry', 'Ivan', 'Igor']
+        basic_hp = 80
+        hp_divider = 4
+        
+        basic_dmg = 30
+        dmg_divider = 2
+        
+        self.hp = self.random_range_values(basic_hp, hp_divider)
+        
+        self.dmg = self.random_range_values(basic_dmg, dmg_divider)
+        
+        self.name = random.sample(names, 1)[0]
+        
+    def lump_question(self, reason):
+        questions_attack = [
+            'Hey you, give me your stuf!'
+        ]
+        questions_conversation = [
+            'What do you want?'
+        ]
+        
+        if reason == 'attack':
+            return random.sample(questions_attack, 1)[0]
+        elif reason == 'conversation':
+            return random.sample(questions_conversation, 1)[0]
+    
+    def dmg_calculation(self, hero):
+        pass
+    
+    def hero_revenue_calculation(self):
+        revenue = {
+            'coins': 0,
+            'cans': 0,
+            'bottles': 0
+        }
+        
+        basic_revenue = 30
+        revenue_divider = 2
+        
+        for item in revenue.keys():
+            revenue[item] = self.random_range_values(basic_revenue, revenue_divider)
+        
+        return revenue
+
+    def perc_lost_calc(self, value):
+        lost = (random.randint(50, 100)) / 100
+        return int(value * lost)
+
+    def hero_lost_calculation(self, hero):
+        lost = {
+            'coins': self.perc_lost_calc(hero.Backpack.money),
+            'cans': self.perc_lost_calc(hero.Backpack.recycles['Can']),
+            'bottles': self.perc_lost_calc(hero.Backpack.recycles['Bottle'])
+        }
+        
+        return lost
+    
+    def fight(self, hero, input):
+        fighting = True
+        next_round = False
+        
+        while fighting:
+            if next_round:
+                user_input = self.printer.screen.getch()
+                
+            user_input = input
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            
+            hero_dmg_range = int(hero.dmg / 10)
+            hero_dmg_random = random.randint(hero.dmg - hero_dmg_range, hero.dmg + hero_dmg_range)
+            
+            lump_dmg_range = int(self.dmg / 10)
+            lump_dmg_random = random.randint(self.dmg - lump_dmg_range, self.dmg + lump_dmg_range)
+            
+            self.hp -= hero_dmg_random
+            
+            if self.hp < 0:
+                self.multilinePrinter.print_line(f"You defeated {self.name}.")
+                self.printer.screen.refresh()
+                time.sleep(1)
+                
+                self.multilinePrinter.print_line(f"You earned:")
+                self.printer.screen.refresh()
+                
+                revenue = self.hero_revenue_calculation()
+                for item in ['coins', 'cans', 'bottles']:
+                    time.sleep(0.5)
+                    
+                    self.multilinePrinter.print_line(f"{revenue[item]} {item}")
+                    if item == 'coins':
+                        hero.Backpack.money += revenue[item]
+                    elif item == 'cans':
+                        hero.Backpack.recycles['Can'] += revenue[item]
+                    elif item == 'bottles':
+                        hero.Backpack.recycles['Bottle'] += revenue[item]
+                        
+                    self.printer.print_hero_stats()
+                    self.printer.refresh()
+                    
+                    # time.sleep(0.5)
+                
+                self.Board.board[self.row][self.col] = ' '
+                
+                self.row = None
+                self.col = None
+                
+                return 1
+            else:                
+                if hero.Inventory.weapon:
+                    self.multilinePrinter.print_line(hero.Inventory.weapon.fight_message())
+                else:
+                    self.multilinePrinter.print_line(hero.fight_message().format(name=self.name))
+                
+                self.printer.screen.refresh()
+                
+                time.sleep(0.5)
+                
+                self.multilinePrinter.print_line(f"You did {hero_dmg_random} damage to {self.name}. {self.name}'s HP: {self.hp}.")
+                self.printer.screen.refresh()
+                
+            hero.hp -= lump_dmg_random
+            # time.sleep(0.5)
+            
+            if hero.hp < 0:
+                self.multilinePrinter.print_line(f"You was defeated by {self.name}.")
+                self.printer.screen.refresh()
+                time.sleep(1)
+                
+                self.multilinePrinter.print_line(f"You lost:")
+                self.printer.screen.refresh()
+                
+                lost = self.hero_lost_calculation(hero)
+                for item in ['coins', 'cans', 'bottles']:
+                    time.sleep(0.5)
+                    
+                    self.multilinePrinter.print_line(f"{lost[item]} {item}")
+                    
+                    if item == 'coins':
+                        hero.Backpack.money -= lost[item]
+                    elif item == 'cans':
+                        hero.Backpack.recycles['Can'] -= lost[item]
+                    elif item == 'bottles':
+                        hero.Backpack.recycles['Bottle'] -= lost[item]
+                        
+                    self.printer.print_hero_stats()
+                    self.printer.refresh()
+                    
+                
+                # time.sleep(1)
+                return 1
+            else:
+                time.sleep(0.5)
+                self.multilinePrinter.print_line(f"{self.name} hit you by {lump_dmg_random}. Your HP: {hero.hp}.")
+                self.printer.screen.refresh()
+            next_round = True
+    
+    def react(self, hero):
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+            
+            self.multilinePrinter.clear()
+            self.multilinePrinter.reset_line()
+            
+            if hero.Backpack.recycles['Can'] > 10 or hero.Backpack.recycles['Bottle'] > 10:
+                self.multilinePrinter.print_line(self.lump_question('attack'))
+                self.multilinePrinter.print_line(f"1. Attack.")
+                self.multilinePrinter.print_line(f"2. Try to get along with {self.name}.")
+                self.multilinePrinter.print_line("0. Exit")
+                self.multilinePrinter.print_line(" ")
+                self.multilinePrinter.refresh()
+                
+                if user_input == ord('1'):
+                    user_input = self.fight(hero, user_input)
+                    
+                elif user_input == ord('2'):
+                    pass
+                elif user_input == ord('0'):
+                    self.multilinePrinter.clear()
+                else:
+                    user_input = None
+                
+                # next_round = True
+            else:
+                self.multilinePrinter.print_line(self.lump_question('conversation'))
+                self.multilinePrinter.print_line(f"1. Attack.")
+                self.multilinePrinter.print_line(f"2. Try to take {self.name}'s stuff.")
+                self.multilinePrinter.print_line("0. Exit")
+                self.multilinePrinter.print_line(" ")
+                self.multilinePrinter.refresh()
+                
+                if user_input == ord('1'):
+                    user_input = self.fight(hero, user_input)
+                    
+                elif user_input == ord('2'):
+                    pass
+                elif user_input == ord('0'):
+                    self.multilinePrinter.clear()
+                else:
+                    user_input = None
+            
+            next_round = True
     
 
 
