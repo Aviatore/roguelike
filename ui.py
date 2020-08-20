@@ -8,10 +8,12 @@ class Printer:
         self.colors = {}
         self.hero = None
         self.msg = ""
-        self.row = self.Board.height + 3
+        self.ver_offset = 4
+        self.row = self.Board.height + self.ver_offset
         self.current_row = self.row
         self.col = 5
         self.current_col = self.col
+        
         
     
     def add_hero(self, hero):
@@ -45,13 +47,63 @@ class Printer:
     
     def update_board(self):
         self.Board = self.all_boards.current_board
-        self.row = self.Board.height + 3
+        self.row = self.Board.height + self.ver_offset
+    
+    def hp_stat_calc(self, ver_offset, hor_offset):
+        hp_green = 7
+        hp_orange = 4
         
+        hp_percent = int((self.hero.hp * 10) // self.hero.max_hp)
+        hp_percent_txt = "|" * hp_percent
+        
+        hp_remain = 10 - hp_percent
+        
+        
+        if hp_percent <= 4:
+            self.screen.addstr(ver_offset, hor_offset, hp_percent_txt, self.curses.color_pair(6))
+            return hp_percent, hp_remain
+        elif hp_percent <= 7:
+            self.screen.addstr(ver_offset, hor_offset, hp_percent_txt, self.curses.color_pair(7))
+            return hp_percent, hp_remain
+        else:
+            self.screen.addstr(ver_offset, hor_offset, hp_percent_txt, self.curses.color_pair(5))
+            return hp_percent, hp_remain
+    
     def print_hero_stats(self):
         """The function prints the hero statistics, e.g. HP, Mana, Stamina, on the board's right-hand-side."""
+        HOR_OFFSET = 2
+        VER_OFFSET = 0
+        hp_label = "HP: "
+        
+        self.screen.addstr(VER_OFFSET, HOR_OFFSET, " "*self.Board.width)
         money_stat = f"Money: {self.hero.Backpack.money} coins"
+        
+        self.screen.addstr(VER_OFFSET, HOR_OFFSET, hp_label)
+        hp_percent, hp_remain = self.hp_stat_calc(VER_OFFSET, HOR_OFFSET + len(hp_label))
+        hp_remain_txt = "|" * hp_remain
+        
+        offset_sum = HOR_OFFSET + len(hp_label) + hp_percent
+        self.screen.addstr(VER_OFFSET, offset_sum, hp_remain_txt)
+        
+        offset_sum += hp_remain + 4
+        
+        msg = f"Lvl: {self.hero.lvl}  Drunk: {self.hero.drunk}%  Map: m   Inventory: i   Stats: s"
+        self.screen.addstr(VER_OFFSET, offset_sum, msg)
+        
+        self.lower_stat_printer()
+        
+        # msg = f"Coins: {self.hero.Backpack.money}   Cans: {self.hero.Backpack.recycles['Can']}   Bottles: {self.hero.Backpack.recycles['Bottle']}"
+        # self.screen.addstr(0, 2, msg)
+        
+    def lower_stat_printer(self):
+        self.update_board()
+        
+        row = self.Board.height + 2
+        col = 2
+        
         msg = f"Coins: {self.hero.Backpack.money}   Cans: {self.hero.Backpack.recycles['Can']}   Bottles: {self.hero.Backpack.recycles['Bottle']}"
-        self.screen.addstr(0, 2, msg)
+        self.screen.addstr(row, col, msg)
+        
     
     def print_hero_inventory(self):
         pass

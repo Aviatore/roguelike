@@ -526,6 +526,9 @@ class Hero(Person):
         super().__init__(type, all_boards)
         self.mark = 'P'
         self.hp = None
+        self.lvl = 1
+        self.drunk = 0
+        self.max_hp = None
         self.dmg = 30
         self.protection = None
         self.walk_speed = 1
@@ -560,6 +563,7 @@ class Hero(Person):
     
     def set_hp(self, hp):
         self.hp = hp
+        self.max_hp = hp
     
     def set_dmg(self, dmg):
         self.dmg = dmg
@@ -1137,8 +1141,8 @@ class Recycle_item(Person):
         self.amount = self.random_range_values(basic_amount, divider)
     
     def react(self, hero):
-        self.multilinePrinter.clear()
-        self.multilinePrinter.reset_line()
+        self.printer.msgBox_clear()
+        self.printer.msgBox_reset_line()
         
         if self.amount == 1:
             name = self.name
@@ -1302,6 +1306,17 @@ class Lump(Person):
         
         return lost
     
+    def activate_interest_lost(self):
+        self.interest_loss = 10
+    
+    def reduce_hp(self, object_, hp):
+        diff = object_.hp - hp
+        
+        if diff < 0:
+            object_.hp = 0
+        else:
+            object_.hp = diff
+    
     def fight(self, hero, input):
         fighting = True
         next_round = False
@@ -1320,9 +1335,24 @@ class Lump(Person):
             lump_dmg_range = int(self.dmg / 10)
             lump_dmg_random = random.randint(self.dmg - lump_dmg_range, self.dmg + lump_dmg_range)
             
-            self.hp -= hero_dmg_random
+            self.reduce_hp(self, hero_dmg_random)
+            # self.hp -= hero_dmg_random
             
-            if self.hp < 0:
+            if hero.Inventory.weapon:
+                self.multilinePrinter.print_line(hero.Inventory.weapon.fight_message())
+            else:
+                self.multilinePrinter.print_line(hero.fight_message().format(name=self.name))
+            
+            self.printer.screen.refresh()
+            
+            time.sleep(0.5)
+            
+            self.multilinePrinter.print_line(f"You did {hero_dmg_random} damage to {self.name}. {self.name}'s HP: {self.hp}.")
+            self.printer.print_hero_stats()
+            self.printer.screen.refresh()
+            time.sleep(1)
+            
+            if self.hp == 0:
                 self.multilinePrinter.print_line(f"You defeated {self.name}.")
                 self.printer.screen.refresh()
                 time.sleep(1)
@@ -1353,24 +1383,20 @@ class Lump(Person):
                 # self.row = None
                 # self.col = None
                 
-                return 1
-            else:                
-                if hero.Inventory.weapon:
-                    self.multilinePrinter.print_line(hero.Inventory.weapon.fight_message())
-                else:
-                    self.multilinePrinter.print_line(hero.fight_message().format(name=self.name))
+                self.activate_interest_lost()
+                self.hp = 50
                 
-                self.printer.screen.refresh()
+                return 1      
                 
-                time.sleep(0.5)
-                
-                self.multilinePrinter.print_line(f"You did {hero_dmg_random} damage to {self.name}. {self.name}'s HP: {self.hp}.")
-                self.printer.screen.refresh()
-                
-            hero.hp -= lump_dmg_random
+            self.reduce_hp(hero, hero_dmg_random)
+            # hero.hp -= lump_dmg_random
             # time.sleep(0.5)
+            self.multilinePrinter.print_line(f"{self.name} hit you by {lump_dmg_random}. Your HP: {hero.hp}.")
+            self.printer.print_hero_stats()
+            self.printer.screen.refresh()
+            time.sleep(1)
             
-            if hero.hp < 0:
+            if hero.hp == 0:
                 self.multilinePrinter.print_line(f"You was defeated by {self.name}.")
                 self.printer.screen.refresh()
                 time.sleep(1)
@@ -1396,11 +1422,10 @@ class Lump(Person):
                 self.printer.screen.getch()
                 
                 # time.sleep(1)
+                self.activate_interest_lost()
+                
                 return 1
-            else:
-                time.sleep(0.5)
-                self.multilinePrinter.print_line(f"{self.name} hit you by {lump_dmg_random}. Your HP: {hero.hp}.")
-                self.printer.screen.refresh()
+                
             next_round = True
     
     def react(self, hero):

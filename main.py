@@ -13,6 +13,9 @@ def main(screen):
     curses.init_pair(2, 76, -1) # TREE_COLOR_PAIR
     curses.init_pair(3, 247, 15) # ROCK_COLOR_PAIR
     curses.init_pair(4, 208, -1)
+    curses.init_pair(5, 118, -1) # green
+    curses.init_pair(6, 196, -1) # red
+    curses.init_pair(7, 208, -1) # orange
     color_pairs = [
         ['~', 1],
         ['Y', 2],
@@ -133,7 +136,7 @@ def main(screen):
         printer.msgBox_print_line_cached()
         
         # printer.screen.addstr(30, 5, f"DEBUG: {hero.dir} {hero.dir_offset} {hero.distance_row} {hero.distance_col} {hero.reverse_offset}")
-        printer.screen.addstr(30, 5, f"DEBUG: {hero.interest_lvl}")
+        # printer.screen.addstr(30, 5, f"DEBUG: {hero.interest_lvl}")
         
         screen.refresh()
         
