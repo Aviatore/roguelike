@@ -462,6 +462,7 @@ class Backpack:
             'Can': 0,
             'Bottle': 0
         }
+        self.rose = False
         
     def add_item(self, item_type, item):
         if item_type == 'weapon':        
@@ -630,7 +631,18 @@ class Hero(Person):
             # Getting destination board id
             if current_mark == '-':
                 door_id = f"{str(next_row)}:{str(next_col)}"
+                
                 destination_board_id = self.all_boards.current_board.doors_destination[door_id]
+                
+                if destination_board_id == 'b3' and not self.Backpack.rose:
+                    self.printer.msgBox_clear()
+                    self.printer.msgBox_reset_line()
+                    self.printer.msgBox_print_line("You are not eligible to pass that gate.")
+                    self.Board.board[self.row][self.col] = 'P'
+                    self.printer.print_board()
+                    self.printer.refresh()
+                    self.printer.screen.getch()
+                    return
             else:
                 destination_board_id = self.Board.freePass_destination[freePass_direction]
             
