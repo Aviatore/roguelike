@@ -454,7 +454,7 @@ class Backpack:
         self.armors = []
         self.foods = []
         self.other = []
-        self.money = 0
+        self.money = 80
         self.recycles = {
             'Can': 0,
             'Bottle': 0
@@ -523,7 +523,7 @@ class Hero(Person):
         super().__init__(type, all_boards)
         self.mark = 'P'
         self.hp = None
-        self.dmg = 40
+        self.dmg = 30
         self.protection = None
         self.walk_speed = 1
         self.direction = None
@@ -539,6 +539,7 @@ class Hero(Person):
         self.dir_offset = 0
         self.distance_row = 0
         self.distance_col = 0
+        self.interest_lvl = 0
         self.closest_row = 0
         self.closest_col = 0
         self.reverse_offset = False
@@ -688,14 +689,35 @@ class Hero(Person):
     def update_objects(self):
         self.Objects = self.all_objects.current_objects
     
-    def find_closest_recycle(self, object_):
+    def atack_hero_decide(self, object_):
+        IMPACT_MONEY = 10
+        IMPACT_CANS = 20
+        IMPACT_BOTTLES = 30
+        
+        if object_.interest_loss == 0:
+            self.interest_lvl = 0
+            
+            self.interest_lvl += self.Backpack.money // IMPACT_MONEY
+            self.interest_lvl += self.Backpack.recycles['Can'] // IMPACT_CANS
+            self.interest_lvl += self.Backpack.recycles['Bottle'] // IMPACT_BOTTLES
+            
+            distance_row = abs(object_.row - self.row)
+            distance_col = abs(object_.col - self.col)
+
+            if max(distance_row, distance_col) < self.interest_lvl:
+                return True
+            else:
+                return False
+        
+    
+    def find_closest_object(self, object_):
         closest_recycle = None
         min_distance = None
         
         for recycle in [element for element in self.Objects.objects_list if element.type == 'Recycle']:
             if recycle.row is not None:
-                distance_row = abs(self.row - recycle.row)
-                distance_col = abs(self.col - recycle.col)
+                distance_row = abs(object_.row - recycle.row)
+                distance_col = abs(object_.col - recycle.col)
                 
                 if min_distance is not None:
                     if max(distance_row, distance_col) < min_distance:
@@ -704,6 +726,19 @@ class Hero(Person):
                 else:
                     min_distance = max(distance_row, distance_col)
                     closest_recycle = recycle
+        
+        if self.atack_hero_decide(object_):
+            closest_recycle = self
+        # distance_row = abs(object_.row - self.row)
+        # distance_col = abs(object_.col - self.col)
+        
+        # if min_distance is not None:
+        #     if max(distance_row, distance_col) < min_distance:
+        #         min_distance = max(distance_row, distance_col)
+        #         closest_recycle = self
+        # else:
+        #     min_distance = max(distance_row, distance_col)
+        #     closest_recycle = self
         
         return closest_recycle
     
@@ -747,8 +782,8 @@ class Hero(Person):
         return (self.dir + self.dir_offset) % 4
     
     def move_objects(self):    
-        for object_ in [element for element in self.Objects.objects_list if element.type == 'Lumps']:                
-            closest_recycle = self.find_closest_recycle(object_)
+        for object_ in [element for element in self.Objects.objects_list if element.type == 'Lump']:                
+            closest_recycle = self.find_closest_object(object_)
             if closest_recycle:
                 self.closest_row = closest_recycle.row
             else:
@@ -768,9 +803,12 @@ class Hero(Person):
                     
                     
                     if abs(closest_recycle.row - row_prev) <= 1 and abs(closest_recycle.col - col_prev) <= 1:
-                        self.printer.Board.board[closest_recycle.row][closest_recycle.col] = ' '
-                        closest_recycle.row = None
-                        closest_recycle.col = None
+                        if closest_recycle.type == 'hero':
+                            object_.react(self)
+                        else:
+                            self.printer.Board.board[closest_recycle.row][closest_recycle.col] = ' '
+                            closest_recycle.row = None
+                            closest_recycle.col = None
                         return
                     
                     distance_row = abs(closest_recycle.row - row_prev)
@@ -851,6 +889,9 @@ class Hero(Person):
                         self.reverse_offset_direction()
 
                     loop = False
+                
+        if object_.interest_loss > 0:
+            object_.interest_loss -= 1
         
 
 
@@ -1182,6 +1223,7 @@ class Lump(Person):
         self.name = None
         self.dmg = 20
         self.hp = 50
+        self.interest_loss = 0
         self.printer = printer
         self.multilinePrinter = MultiLinePrinter(self.printer)
         
@@ -1286,13 +1328,14 @@ class Lump(Person):
                         
                     self.printer.print_hero_stats()
                     self.printer.refresh()
+                self.printer.screen.getch()
                     
                     # time.sleep(0.5)
                 
-                self.Board.board[self.row][self.col] = ' '
+                # self.Board.board[self.row][self.col] = ' '
                 
-                self.row = None
-                self.col = None
+                # self.row = None
+                # self.col = None
                 
                 return 1
             else:                
@@ -1334,7 +1377,7 @@ class Lump(Person):
                         
                     self.printer.print_hero_stats()
                     self.printer.refresh()
-                    
+                self.printer.screen.getch()
                 
                 # time.sleep(1)
                 return 1

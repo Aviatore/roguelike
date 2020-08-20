@@ -151,7 +151,7 @@ def main(screen):
     
     all_objects.set_current_objects('b1')
     
-    hero = engine.Hero('fighter', all_boards, all_objects, printer)
+    hero = engine.Hero('hero', all_boards, all_objects, printer)
     # sword = engine.Weapon('s1', 'sword', dmg=30)
     # hero.Inventory.put_on_weapon(sword)
     hero.set_hp(100)
@@ -186,6 +186,7 @@ def main(screen):
         printer.msgBox_print_line_cached()
         
         # printer.screen.addstr(30, 5, f"DEBUG: {hero.dir} {hero.dir_offset} {hero.distance_row} {hero.distance_col} {hero.reverse_offset}")
+        printer.screen.addstr(30, 5, f"DEBUG: {hero.interest_lvl}")
         
         screen.refresh()
         
