@@ -252,8 +252,11 @@ class Person:
         self.col = None
         self.mark = None
     
-    def put_on_board(self):
-        self.Board.board[self.row][self.col] = self.mark
+    def put_on_board(self, board_id=None):
+        if board_id is not None:
+            self.all_boards.boards[board_id].board[self.row][self.col] = self.mark
+        else:
+            self.Board.board[self.row][self.col] = self.mark
     
     def object_random_position(self):       
         search_coords = True
@@ -286,10 +289,10 @@ class Person:
     def set_name(self, name):
         self.name = name
     
-    def set_position(self, row, col):
+    def set_position(self, row, col, board_id=None):
         self.row = row
         self.col = col
-        self.put_on_board()
+        self.put_on_board(board_id)
 
 
 class Person_custom:
@@ -454,7 +457,7 @@ class Backpack:
         self.armors = []
         self.foods = []
         self.other = []
-        self.money = 80
+        self.money = 0
         self.recycles = {
             'Can': 0,
             'Bottle': 0
@@ -890,8 +893,8 @@ class Hero(Person):
 
                     loop = False
                 
-        if object_.interest_loss > 0:
-            object_.interest_loss -= 1
+            if object_.interest_loss > 0:
+                object_.interest_loss -= 1
         
 
 
@@ -996,7 +999,6 @@ class Buyer(Person):
         super().__init__('Buyer', all_boards)
         self.mark = '!'
         self.printer = printer
-        self.multilinePrinter = MultiLinePrinter(self.printer)
         self.name = 'Bruce'
         self.sell_price = {
             'Can': 1,
@@ -1019,45 +1021,59 @@ class Buyer(Person):
             return int(self.sell_price[item_type] * amount)
     
     def sell_reaction(self, item_type, hero):
-        self.multilinePrinter.clear()
-        self.multilinePrinter.reset_line()
+        self.printer.msgBox_clear()
+        self.printer.msgBox_reset_line()
         
         item_amount = hero.Backpack.recycles[item_type]
         
         answers = []
-        if item_amount > 1:
-            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amount} {item_type}s.")
+        if item_amount == 0:
+            self.printer.msgBox_print_line(f"You opened your bag but you notice that you have no {item_type}s.")
+        elif item_amount > 1:
+            self.printer.msgBox_print_line(f"You opened your bag and take out {item_amount} {item_type}s.")
         else:
-            self.multilinePrinter.print_line(f"You opened your bag and take out {item_amount} {item_type}.")
+            self.printer.msgBox_print_line(f"You opened your bag and take out {item_amount} {item_type}.")
         
-        self.multilinePrinter.refresh()
+        self.printer.refresh()
         time.sleep(2)
-        if item_amount < 5:
-            self.multilinePrinter.print_line(f"{self.name}: You must be joking. I won't buy {item_amount} {item_type}s from you.")
-            self.multilinePrinter.print_line(f"Come back if you collect more.")
-            self.multilinePrinter.refresh()
+        if item_amount == 0:
+            self.printer.msgBox_print_line(f"{self.name}: I see that you have no {item_type}s.")
+            self.printer.msgBox_print_line(f"{self.name}: Pick up more {item_type}s and come later.")
+        elif item_amount < 5:
+            self.printer.msgBox_print_line(f"{self.name}: You must be joking. I won't buy {item_amount} {item_type}s from you.")
+            
+            self.printer.refresh()
+            time.sleep(1)
+            
+            self.printer.msgBox_print_line(f"{self.name}: Come back if you collect more.")
+            self.printer.refresh()
             
             time.sleep(2)
-            self.multilinePrinter.print_line(f"You put your {item_type}s back to you bag and go away.")
+            self.printer.msgBox_print_line(f"You put your {item_type}s back to you bag and go away.")
         elif item_amount < 30:
-            self.multilinePrinter.print_line(f"{self.name}: Only {item_amount} {item_type}s?")
-            self.multilinePrinter.print_line(f"I can give you {self.calc_revenue(item_amount, item_type)} coins.")
-            self.multilinePrinter.refresh()
+            self.printer.msgBox_print_line(f"{self.name}: Only {item_amount} {item_type}s?")
+            
+            self.printer.refresh()
+            
+            time.sleep(1)
+            self.printer.msgBox_print_line(f"{self.name}: I can give you {self.calc_revenue(item_amount, item_type)} coins.")
+            self.printer.refresh()
             
             time.sleep(2)
-            self.multilinePrinter.print_line(f"You put earnd coins into you wallet.")
+            
+            self.printer.msgBox_print_line(f"You put earnd coins into you wallet.")
             hero.Backpack.recycles[item_type] = 0
             hero.Backpack.money += self.calc_revenue(item_amount, item_type)
         elif item_amount >= 30:
-            self.multilinePrinter.print_line(f"For {item_amount} I can give you {self.calc_revenue(item_amount, item_type)} coins.")
-            self.multilinePrinter.refresh()
+            self.printer.msgBox_print_line(f"{self.name}: For {item_amount} I can give you {self.calc_revenue(item_amount, item_type)} coins.")
+            self.printer.refresh()
             
             time.sleep(2)
-            self.multilinePrinter.print_line(f"You put earnd coins into you wallet.")
+            self.printer.msgBox_print_line(f"You put earnd coins into you wallet.")
             hero.Backpack.recycles[item_type] = 0
             hero.Backpack.money += self.calc_revenue(item_amount, item_type)
         
-        self.multilinePrinter.refresh()
+        self.printer.refresh()
         
     
     def react(self, hero):
@@ -1068,31 +1084,31 @@ class Buyer(Person):
             if next_round:
                 user_input = self.printer.screen.getch()
             
-            self.multilinePrinter.clear()
-            self.multilinePrinter.reset_line()
-            self.multilinePrinter.print_line(self.buyer_question())
-            self.multilinePrinter.print_line(f"1. Cans")
-            self.multilinePrinter.print_line(f"2. Bottles")
-            self.multilinePrinter.print_line("0. Exit")
-            self.multilinePrinter.print_line(" ")
-            self.multilinePrinter.refresh()
+            self.printer.msgBox_clear()
+            self.printer.msgBox_reset_line()
+            self.printer.msgBox_print_line(self.buyer_question())
+            self.printer.msgBox_print_line(f"1. Cans")
+            self.printer.msgBox_print_line(f"2. Bottles")
+            self.printer.msgBox_print_line("0. Exit")
+            self.printer.msgBox_print_line(" ")
+            self.printer.refresh()
             
             if user_input == ord('1'):
                 self.sell_reaction('Can', hero)
                 
                 hero.printer.print_hero_stats()
                 
-                self.multilinePrinter.refresh()
+                self.printer.refresh()
                 self.printer.screen.getch()
             elif user_input == ord('2'):
                 self.sell_reaction('Bottle', hero)
                 hero.printer.print_hero_stats()
                 
-                self.multilinePrinter.refresh()
+                self.printer.refresh()
                 self.printer.screen.getch()
                 
             elif user_input == ord('0'):
-                self.multilinePrinter.clear()
+                self.printer.clear()
             else:
                 user_input = None
             

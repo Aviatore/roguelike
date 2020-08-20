@@ -45,6 +45,7 @@ class Printer:
     
     def update_board(self):
         self.Board = self.all_boards.current_board
+        self.row = self.Board.height + 3
         
     def print_hero_stats(self):
         """The function prints the hero statistics, e.g. HP, Mana, Stamina, on the board's right-hand-side."""
@@ -73,5 +74,6 @@ class Printer:
         self.screen.refresh()
     
     def msgBox_clear(self):
+        self.update_board()
         self.clear_screen()
         self.print_hero_stats()
