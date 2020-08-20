@@ -126,6 +126,8 @@ def main(screen):
             hero.move("left")
         elif user_input == curses.KEY_RIGHT:
             hero.move("right")
+        elif user_input == ord('i'):
+            hero.Backpack.print_backpack()
         
         hero.move_objects()
         

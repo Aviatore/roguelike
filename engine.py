@@ -355,12 +355,13 @@ class Person_custom:
 
 
 class Weapon:
-    def __init__(self, id, name, dmg):
+    def __init__(self, id, name, dmg, value):
         self.name = name
         self.dmg = dmg
         self.id = id
         self.type = 'weapon'
         self.fight_messages = []
+        self.value = value
     
     def set_dmg(self, dmg):
         self.dmg = dmg
@@ -373,17 +374,26 @@ class Weapon:
 
 
 
-class Armor:
-    def __init__(self, id, name, protection):
+class Clothes:
+    def __init__(self, id, name, protection, value):
         self.name = name
         self.protection = protection
         self.id = id
         self.type = 'armor'
+        self.value = value
     
     def set_protection(self, protection):
         self.protection = protection
 
 
+class Alcohol:
+    def __init__(self, id, name, drunk, value):
+        self.id = id
+        self.name = name
+        self.drunk = drunk
+        self.value = value
+        
+        
 class Item(Person):
     def __init__(self, all_boards, printer, id, name):
         super().__init__('other', all_boards)
@@ -452,7 +462,7 @@ class Inventory:
 
 
 class Backpack:
-    def __init__(self):
+    def __init__(self, printer):
         self.weapons = []
         self.armors = []
         self.foods = []
@@ -462,7 +472,8 @@ class Backpack:
             'Can': 0,
             'Bottle': 0
         }
-        self.rose = False
+        self.rose = True
+        self.printer = printer
         
     def add_item(self, item_type, item):
         if item_type == 'weapon':        
@@ -516,6 +527,118 @@ class Backpack:
             matched_items = [item for item in self.other if item.id == id]
             return len(matched_items)
     
+    def print_backpack(self):
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+        
+            names = [["Id", "Type"]]
+            
+            for index, item in enumerate(["weapon", "clothes", "alco", "special"]):
+                names.append([str(index + 1), item])
+            
+            names.append(["0", "Exit"])
+            
+            self.print_table(names)
+            
+            if user_input == ord("1"):
+                self.print_weapons()
+                user_input = None # flaga jest resetowana, aby pętla while była ponownie wykonana
+                next_round = False # flaga jest ustawiana na False, aby drukowanie tabeli nie było zablokowane funkcją getch()
+            elif user_input == ord("2"):
+                self.print_table(["dupa"])
+                user_input = None
+                next_round = False
+            elif user_input == ord("3"):
+                self.print_table(["dupa"])
+                user_input = None
+                next_round = False
+            elif user_input == ord("4"):
+                self.print_table(["dupa"])
+                user_input = None
+                next_round = False
+            elif user_input == ord("0"):
+                self.printer.msgBox_clear()
+            else:
+                user_input = None
+                next_round = True
+        
+            
+    
+    def print_weapons(self):       
+        user_input = None
+        next_round = False
+        
+        while user_input is None:
+            if next_round:
+                user_input = self.printer.screen.getch()
+            
+            table = [["Id", "Name", "Damage"]]
+            
+            for index, weapon in enumerate(self.weapons):
+                table.append([str(index + 1), weapon.name])
+            
+            table.append(["0", "Exit", ""])
+            
+            self.print_table(table)
+            
+            if user_input == ord('0'):
+                self.printer.msgBox_clear()
+            else:
+                user_input = None
+                next_round = True
+    
+    
+    def print_table(self, table):
+        """Prints tabular data like above.
+        Args:
+            table: list of lists - the table to print out
+        """
+        self.printer.msgBox_clear()
+        self.printer.msgBox_reset_line()
+        
+        # Create a list with max lengths of column elements
+        max_col_len = list(map(len, table[0]))
+
+        for line_index, line in enumerate(table):
+
+            for element_index, element in enumerate(line):
+
+                if max_col_len[element_index] < len(element):
+                    max_col_len[element_index] = len(element)
+
+        # Create a table line that matches the lengths of column elements
+        table_line = ""
+
+        for index, col_len in enumerate(max_col_len):
+            table_line += "-" * (col_len + 2)
+
+            if index < len(table[0]) - 1:
+                table_line += "+"
+
+        # Print the table
+        INDEX = 0
+        VALUE = 1
+        PADDING = 2  # A space between the value and a table cell wall
+        self.printer.msgBox_print_line(table_line)
+
+        for index, line in enumerate(table):
+
+            # The first line is treated as a header which is capitalized
+            if index == 0:
+                line = list(map(lambda element: element.capitalize(), line))
+
+            self.printer.msgBox_print_line("|".join(
+                map(lambda element: element[VALUE].ljust(max_col_len[element[INDEX]] + PADDING), enumerate(line))))
+
+            if index == 0:
+                self.printer.msgBox_print_line(table_line)
+        self.printer.screen.refresh()
+                
+    
 class Task:
     def __init__(self, task_id, label):
         self.task_id = task_id
@@ -535,7 +658,7 @@ class Hero(Person):
         self.walk_speed = 1
         self.direction = None
         self.Inventory = Inventory(self)
-        self.Backpack = Backpack()
+        self.Backpack = Backpack(printer)
         self.all_objects = all_objects
         self.Objects = self.all_objects.current_objects
         self.printer = printer
@@ -1435,6 +1558,7 @@ class Lump(Person):
                 
                 # time.sleep(1)
                 self.activate_interest_lost()
+                self.hp = 50
                 
                 return 1
                 
